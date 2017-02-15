@@ -89,7 +89,7 @@ app.get("/search", (req, res)=>{
 
 app.get("/result/:search_id/:page?", (req, res)=>{
     const search_id = req.params.search_id;
-    const page = req.params.page || 1;
+    const page = parseInt(req.params.page) || 1;
     car28.getSearchResult(search_id, page)
         .then(result=>{
             res.send(result);
@@ -114,7 +114,7 @@ app.get("/picture/:url", (req, res)=>{
     const url = req.params.url;
     car28.getPicture(url)
         .then(result=>{
-            res.set("Content-Type", "image/jpg").send(result);
+            res.set("Content-Type", "image/jpeg").send(result);
         })
         .catch(err=>{
             res.status(500).send(err);

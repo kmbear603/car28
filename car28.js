@@ -8,7 +8,7 @@ const cheerio = require("cheerio");
 
 const ENCODING = "big5";
 const OPTIONS = {};
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 20;
 const SESSIONS = [];
 
 function prepareOptions(){
@@ -375,170 +375,192 @@ function makeResult(session, page){
 
 function process(session, page){
     return new Promise((resolve, reject)=>{
-        if (session.completed || (session.RESULTS && session.RESULTS.length >= page * PAGE_SIZE))
-            return resolve(makeResult(session, page));
-
-        prepareOptions()
-            .then(()=>{
-                const car28_options = translateOptionTo28CarOption(session.options || {});
-                if (!car28_options)
-                    return reject("incorrect options");
-
-                const get_28car_page = function(car28_page){
-                    return new Promise((resolve, reject)=>{
-                        const agent = session.agent;
-                        const hostname = session.hostName;
+        const after_wait = function(){
+            const finish = function(ret){
+                session.processing = false;
+                return resolve(ret);
+            };
+            
+            const finish_with_error = function(err){
+                session.processing = false;
+                return reject(err);
+            };
+            
+            session.processing = true;
+            
+            prepareOptions()
+                .then(()=>{
+                    const car28_options = translateOptionTo28CarOption(session.options || {});
+                    if (!car28_options)
+                        return finish_with_error("incorrect options");
     
-                        const get_28car_page_work = function(trial){
-                            agent.post(hostname + "sell_lst.php")
-                                .type("form")
-                                .send(car28_options)
-                                .send({ h_page: car28_page })
-                                .charset(ENCODING)
-                                .then(res=>{
-                                    if (res.text.indexOf("window.location='msg_busy.php?") != -1){
-                                        console.warn(new Date(), "busy");
-                                        if (trial == 10)
-                                            return reject(new Date(), "too busy, giveup");
-                                        return setTimeout(get_28car_page_work.bind(null, trial + 1), trial * 500);
-                                    }
-                                    
-                                    const ret = [];
-                
-                                    const $ = cheerio.load(res.text);
+                    const get_28car_page = function(car28_page){
+                        return new Promise((resolve, reject)=>{
+                            const agent = session.agent;
+                            const hostname = session.hostName;
         
-                                    var idx = 0;                                
-                                    for (var idx = 0; ; idx++){
-                                        const rw = $("#rw_" + idx);
-                                        if (!rw || rw.length == 0)
-                                            break;
-                                            
-                                        const obj = {};
-                                        
-                                        const title = $(rw).attr("title");
-                                        obj.id = title.substr(title.lastIndexOf(' ') + 1);
-                                        
-                                        // get the vid
-                                        $(rw).find("td").each((i, td)=>{
-                                            const onclick = $(td).attr("onclick");
-                                            // goDsp(10, 307893092, 'n')
-                                            const tokens = onclick.split(',');
-                                            obj.vid = trimLeadingTrailingSpaces(tokens[1]);
-                                            return false;
-                                        });
-                                        
-                                        $(rw).find("tr[height='36']").each((i, tr)=>{
-                
-                                            $(tr).find("td").each((j, td)=>{
-                                                const txt = trimLeadingTrailingSpaces($(td).text());
-                
-                                                if (j == 0){ // name
-                                                    if (i == 1){  // update time
-                                                        // 14/0214:49
-                                                        const now = new Date();
-                                                        var time = new Date(now.getFullYear(), parseInt(txt.substr(3, 2)) - 1, parseInt(txt.substr(0, 2)), parseInt(txt.substr(5, 2)), parseInt(txt.substr(8, 2)), 0);
-                                                        if (time.getTime() > now.getTime())
-                                                            time.setFullYear(now.getFullYear() - 1);
-                                                        obj.time = formatTime(time);
-                                                        return false;
-                                                    }
-                                            
-                                                    obj.maker = txt.split(' ')[0];
-                                                    obj.model = txt.split(' ')[1];
-                                                }
-                                                else if (j == 1)    // seat
-                                                    obj.seatCount = parseInt(txt.replace(/[^0-9]/g, ""));
-                                                else if (j == 2)    // engine
-                                                    obj.engine = parseInt(txt.replace(/[^0-9]/g, ""));
-                                                else if (j == 3) // transmission
-                                                    obj.transmission = txt;
-                                                else if (j == 4)    // year
-                                                    obj.year = parseInt(txt);
-                                                else if (j == 5)    // price
-                                                    obj.price = parseInt(txt.replace(/[^0-9]/g, ""));
-                                                else if (j == 9)    // sold
-                                                    obj.sold = $(td).find("img").length > 0;
-                                            });
-                                        });
-                                        
-                                        if (session.options){
-                                            const options = session.options;
-                                            
-                                            if ((options.yearMin && obj.year < options.yearMin)
-                                                || (options.yearMax && obj.year > options.yearMax)
-                                                || (options.engineMin && obj.engine < options.engineMin)
-                                                || (options.engineMax && obj.engine > options.engineMax)
-                                                || (options.priceMin && obj.price < options.priceMin)
-                                                || (options.priceMax && obj.price > options.priceMax)
-                                                || (options.seatMin && obj.seatCount < options.seatMin)
-                                                || (options.seatMax && obj.seatCount > options.seatMax))
-                                                continue;
+                            const get_28car_page_work = function(trial){
+                                agent.post(hostname + "sell_lst.php")
+                                    .type("form")
+                                    .send(car28_options)
+                                    .send({ h_page: car28_page })
+                                    .charset(ENCODING)
+                                    .then(res=>{
+                                        if (res.text.indexOf("window.location='msg_busy.php?") != -1){
+                                            console.warn(new Date(), "busy");
+                                            if (trial == 10)
+                                                return reject(new Date(), "too busy, giveup");
+                                            return setTimeout(get_28car_page_work.bind(null, trial + 1), trial * 500);
                                         }
                                         
-                                        ret.push(obj);
-                                    }
+                                        const ret = [];
+                    
+                                        const $ = cheerio.load(res.text);
+            
+                                        var idx = 0;                                
+                                        for (var idx = 0; ; idx++){
+                                            const rw = $("#rw_" + idx);
+                                            if (!rw || rw.length == 0)
+                                                break;
+                                                
+                                            const obj = {};
+                                            
+                                            const title = $(rw).attr("title");
+                                            obj.id = title.substr(title.lastIndexOf(' ') + 1);
+                                            
+                                            // get the vid
+                                            $(rw).find("td").each((i, td)=>{
+                                                const onclick = $(td).attr("onclick");
+                                                // goDsp(10, 307893092, 'n')
+                                                const tokens = onclick.split(',');
+                                                obj.vid = trimLeadingTrailingSpaces(tokens[1]);
+                                                return false;
+                                            });
+                                            
+                                            $(rw).find("tr[height='36']").each((i, tr)=>{
+                    
+                                                $(tr).find("td").each((j, td)=>{
+                                                    const txt = trimLeadingTrailingSpaces($(td).text());
+                    
+                                                    if (j == 0){ // name
+                                                        if (i == 1){  // update time
+                                                            // 14/0214:49
+                                                            const now = new Date();
+                                                            var time = new Date(now.getFullYear(), parseInt(txt.substr(3, 2)) - 1, parseInt(txt.substr(0, 2)), parseInt(txt.substr(5, 2)), parseInt(txt.substr(8, 2)), 0);
+                                                            if (time.getTime() > now.getTime())
+                                                                time.setFullYear(now.getFullYear() - 1);
+                                                            obj.time = formatTime(time);
+                                                            return false;
+                                                        }
+                                                
+                                                        obj.maker = txt.split(' ')[0];
+                                                        obj.model = txt.split(' ')[1];
+                                                    }
+                                                    else if (j == 1)    // seat
+                                                        obj.seatCount = parseInt(txt.replace(/[^0-9]/g, ""));
+                                                    else if (j == 2)    // engine
+                                                        obj.engine = parseInt(txt.replace(/[^0-9]/g, ""));
+                                                    else if (j == 3) // transmission
+                                                        obj.transmission = txt;
+                                                    else if (j == 4)    // year
+                                                        obj.year = parseInt(txt);
+                                                    else if (j == 5)    // price
+                                                        obj.price = parseInt(txt.replace(/[^0-9]/g, ""));
+                                                    else if (j == 9)    // sold
+                                                        obj.sold = $(td).find("img").length > 0;
+                                                });
+                                            });
+                                            
+                                            if (session.options){
+                                                const options = session.options;
+                                                
+                                                if ((options.yearMin && obj.year < options.yearMin)
+                                                    || (options.yearMax && obj.year > options.yearMax)
+                                                    || (options.engineMin && obj.engine < options.engineMin)
+                                                    || (options.engineMax && obj.engine > options.engineMax)
+                                                    || (options.priceMin && obj.price < options.priceMin)
+                                                    || (options.priceMax && obj.price > options.priceMax)
+                                                    || (options.seatMin && obj.seatCount < options.seatMin)
+                                                    || (options.seatMax && obj.seatCount > options.seatMax))
+                                                    continue;
+                                            }
+                                            
+                                            ret.push(obj);
+                                        }
+                                        
+                                        resolve({ completed: idx < 20, results: ret });
+console.log("finished", page);
+                                    })
+                                    .catch(err=>{
+                                        console.error(err);
+                                        reject(err);
+                                    });
+                            }
+                            
+                            get_28car_page_work(1);
+                        });
+                    }
+    
+                    const after_prepare = function(){
+                        const work = function(car28_page){
+                            get_28car_page(car28_page)
+                                .then(obj=>{
+                                    const ret = obj.results;
+                                    const completed = obj.completed;
                                     
-                                    resolve({ completed: idx < 20, results: ret });
+                                    session.lastCar28Page = car28_page;
+                                    session.completed = obj.completed;
+                                    
+                                    if (!session.RESULTS)
+                                        session.RESULTS = [];
+                                        
+                                    ret.forEach(o=>{
+                                        if (session.RESULTS.findIndex(old_o=>{ return old_o.id == o.id }) != -1)
+                                            return true;;
+                                        session.RESULTS.push(o);
+                                    });
+                                    
+                                    if (completed || session.RESULTS.length >= page * PAGE_SIZE)
+                                        return finish(makeResult(session, page));
+    
+                                    work(car28_page + 1);
                                 })
                                 .catch(err=>{
                                     console.error(err);
-                                    reject(err);
+                                    finish_with_error(err);
                                 });
                         }
                         
-                        get_28car_page_work(1);
-                    });
-                }
-
-                const after_prepare = function(){
-                    const work = function(car28_page){
-                        get_28car_page(car28_page)
-                            .then(obj=>{
-                                const ret = obj.results;
-                                const completed = obj.completed;
-                                
-                                session.lastCar28Page = car28_page;
-                                session.completed = obj.completed;
-                                
-                                if (!session.RESULTS)
-                                    session.RESULTS = [];
-                                    
-                                ret.forEach(o=>{
-                                    if (session.RESULTS.findIndex(old_o=>{ return old_o.id == o.id }) != -1)
-                                        return true;;
-                                    session.RESULTS.push(o);
-                                });
-                                
-                                if (completed || session.RESULTS.length >= page * PAGE_SIZE)
-                                    return resolve(makeResult(session, page));
-
-                                work(car28_page + 1);
+                        work((session.lastCar28Page || 0) + 1);
+                    };
+    
+    
+                    if (!session.agent)        
+                        prepareSession(session)
+                            .then(()=>{
+                                after_prepare();
                             })
                             .catch(err=>{
                                 console.error(err);
-                                reject(err);
+                                finish_with_error(err);
                             });
-                    }
-                    
-                    work((session.lastCar28Page || 0) + 1);
-                };
-
-
-                if (!session.agent)        
-                    prepareSession(session)
-                        .then(()=>{
-                            after_prepare();
-                        })
-                        .catch(err=>{
-                            console.error(err);
-                            reject(err);
-                        });
-                else
-                    after_prepare();
-            })
-            .catch(err=>{
-                reject(err);
-            });
+                    else
+                        after_prepare();
+                })
+                .catch(err=>{
+                    finish_with_error(err);
+                });
+        };
+        
+        const wait = function(){
+            if (session.completed || (session.RESULTS && session.RESULTS.length >= page * PAGE_SIZE))
+                resolve(makeResult(session, page));
+            else if (session.processing)
+                setTimeout(wait, 1000);
+            else
+                after_wait();
+        };
+        wait();
     });
 }
 
@@ -674,6 +696,21 @@ function touchOptions(options){
         options.priceMax = parseInt(options.priceMax);
         
     return options;
+}
+
+function checkAndProcess(){
+    var idle_session = null;
+    SESSIONS.forEach(session=>{
+        if (session.processing || session.completed)
+            return true;
+        idle_session = session;
+        return false;
+    });
+    
+    if (!idle_session)
+        return;
+        
+    process(idle_session);
 }
 
 module.exports = {
@@ -815,11 +852,22 @@ module.exports = {
                 break;
             }
             
-            SESSIONS.push({
+            const session = {
                 id: id,
                 options: touchOptions(options),
                 time: new Date().getTime()
-            });
+            };
+            
+            SESSIONS.push(session);
+            
+            // pre-fetch the first page
+            process(session, 1)
+                .then(()=>{
+                    // nothing to do
+                })
+                .catch(()=>{
+                    // nothing to do
+                });
             
             resolve({
                 id: id
@@ -837,6 +885,10 @@ module.exports = {
             process(session, page)
                 .then(res=>{
                     resolve(res);
+                    
+                    // pre-fetch the next page
+                    if (!res.isLastPage)
+                        process(session, page + 1).then(()=>{}).catch(()=>{});
                 })
                 .catch(err=>{
                     reject(err);

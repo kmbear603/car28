@@ -104,7 +104,7 @@
                                 </div>
                             </div>
                             <div class="form-group">
-                                <button type="button" class="btn btn-priamry btn-lg" onClick="onClickSearchButton()">更新</button>
+                                <button type="button" class="btn btn-primary btn-lg" onClick="onClickSearchButton()">更新</button>
                             </div>
                         </form>
                     </div>
@@ -181,8 +181,8 @@
                 const colors = [ "#efefef", "#ffffff" ];
                 results.forEach((result, i)=>{
                     container.append(
-                        "<div class='row' style='background-color:" + colors[i % colors.length] + "; padding:10px'>\
-                            <div class='col-xs-12' style='cursor:pointer' onClick='onClickDetailButton(\"" + result.vid + "\")'>\
+                        "<div class='row' style='background-color:" + colors[i % colors.length] + "; padding:5px'>\
+                            <div class='col-xs-12' style='cursor:pointer; padding:10px' onClick='onClickDetailButton(\"" + result.vid + "\")'>\
                                 <div class='row'>\
                                     <div class='col-xs-12 col-md-7'>\
                                         <strong>\
@@ -204,7 +204,7 @@
                                     </div>\
                                 </div>\
                             </div>\
-                            <div class='col-xs-12' style='display:none' id='detail-" + result.vid + "'>\
+                            <div class='col-xs-12' style='display:none; padding:10px' id='detail-" + result.vid + "'>\
                             </div>\
                         </div>"
                     );
@@ -234,10 +234,19 @@
                 const container = $("#detail-" + vid);
                 if (container.is(":visible"))
                     return container.hide();
-                else if (container.children().length > 0)
+                else if (container.attr("state") == "loaded")
                     return container.show();
+                else if (container.attr("state") == "loading")
+                    return;
+                
+                container.attr("state", "loading");
+                container.children().remove();
+                container.append("<p>Loading...</p>");
+                container.show();
+                
                 request.get("/detail/" + vid)
                     .then(res=>{
+                        container.children().remove();
                         const json = JSON.parse(res.text);
                         
                         var img = "";
@@ -248,14 +257,15 @@
                                 img += "<a href='" + path + "' target='_blank'><img src='" + path + "' style='width:" + img_width + "%; min-width:200px' /></a>"
                             });
                         }
-                        if (img != "")
-                            container.append(
-                                "<div class='row'>\
-                                    <div class='col-xs-12'>" + img + "</div>\
-                                </div>"
-                            );
+                        if (img == "")
+                            img = "沒有圖片";
                         container.append(
                             "<div class='row'>\
+                                <div class='col-xs-12'>" + img + "</div>\
+                            </div>"
+                        );
+                        container.append(
+                            "<div class='row' style='padding:5px 0'>\
                                 <div class='col-xs-12'>" + json.remark + "</div>\
                             </div>"
                         );
@@ -264,24 +274,30 @@
                                 <div class='col-xs-12'><a href='" + json.url + "' target='_blank'>" + json.url + "</a></div>\
                             </div>"
                         );
-                        container.show();
+                        
+                        container.attr("state", "loaded");
                     })
                     .catch(err=>{
                         console.error(err);
+                        container.attr("state", "");
                         alert("failed to get detail");
                     });
             }
         
-            function onClickNextPageButton(){
+            function showLoading(){
                 disableForm();
                 $("#result").children().remove();
+                $("#result").append("<p>Loading...</p>");
+            }
+            
+            function onClickNextPageButton(){
+                showLoading();
                 CURRENT_SEARCH.page++;
                 getResult(CURRENT_SEARCH.page);
             }
             
             function onClickPreviousPageButton(){
-                disableForm();
-                $("#result").children().remove();
+                showLoading();
                 if (CURRENT_SEARCH.page > 0){
                     CURRENT_SEARCH.page--;
                     getResult(CURRENT_SEARCH.page);
@@ -345,9 +361,8 @@
                 if (!year)
                     return;
 
-                $("#result").children().remove();
-                disableForm();
-
+                showLoading();
+                
                 var req = request.get("/search");
                 
                 const type = $("#vehicle-button").attr("data");
