@@ -1,0 +1,558 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>28car, but better</title>
+        <link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/bootswatch/3.3.7/spacelab/bootstrap.min.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    </head>
+    <body>
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-xs-12 col-md-4 col-lg-3">
+                    <div class="well">
+                        <form onSubmit="return false">
+                            <div class="form-group">
+                                <label>車類</label>
+                                <div class="input-group">
+                                    <div class="btn-group">
+                                        <button id="vehicle-button" type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">ANY</button>
+                                        <ul id="vehicle-select" class="dropdown-menu"></ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>車廠</label>
+                                <div class="input-group">
+                                    <div class="btn-group">
+                                        <button id="maker-button" type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">ANY</button>
+                                        <ul id="maker-select" class="dropdown-menu"></ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>型號</label>
+                                <div class="input-group">
+                                    <input id="model-input" type="text" class="form-control" value="" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>座位</label>
+                                <div class="input-group">
+                                    <div class="btn-group">
+                                        <button id="seat-button" type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">ANY</button>
+                                        <ul id="seat-select" class="dropdown-menu"></ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>引擎容積</label>
+                                <div class="input-group">
+                                    <input id="min-engine-input" type="text" class="form-control" value="" />
+                                    <span class="input-group-addon">-</span>
+                                    <input id="max-engine-input" type="text" class="form-control" value="" />
+                                    <span class="input-group-addon">cc</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>傳動</label>
+                                <div class="input-group">
+                                    <div class="btn-group">
+                                        <button id="transmission-button" type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">ANY</button>
+                                        <ul id="transmission-select" class="dropdown-menu"></ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>年份</label>
+                                <div class="input-group">
+                                    <input id="min-year-input" type="text" class="form-control" value="" />
+                                    <span class="input-group-addon">-</span>
+                                    <input id="max-year-input" type="text" class="form-control" value="" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>價格</label>
+                                <div class="input-group">
+                                    <span class="input-group-addon">HKD</span>
+                                    <input id="min-price-input" type="text" class="form-control" value="" />
+                                    <span class="input-group-addon">-</span>
+                                    <input id="max-price-input" type="text" class="form-control" value="" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>狀態</label>
+                                <div class="input-group">
+                                    <div class="btn-group">
+                                        <button id="status-button" type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">ANY</button>
+                                        <ul id="status-select" class="dropdown-menu"></ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group" style="display:none">
+                                <label>排序</label>
+                                <div class="input-group">
+                                    <div class="btn-group">
+                                        <button id="sort-button-model" type="button" class="btn btn-default sort-button" onClick="onClickSortButton('model')">車廠型號</button>
+                                        <button id="sort-button-seat" type="button" class="btn btn-default sort-button" onClick="onClickSortButton('seat')">座位</button>
+                                        <button id="sort-button-engine" type="button" class="btn btn-default sort-button" onClick="onClickSortButton('engine')">引擎容積</button>
+                                        <button id="sort-button-transmission" type="button" class="btn btn-default sort-button" onClick="onClickSortButton('transmission')">傳動</button>
+                                        <button id="sort-button-year" type="button" class="btn btn-default sort-button" onClick="onClickSortButton('year')">年份</button>
+                                        <button id="sort-button-price" type="button" class="btn btn-default sort-button" onClick="onClickSortButton('price')">價格</button>
+                                        <button id="sort-button-status" type="button" class="btn btn-default sort-button" onClick="onClickSortButton('status')">狀態</button>
+                                        <button id="sort-button-time" type="button" class="btn btn-default sort-button btn-primary" onClick="onClickSortButton('time')">更新時間</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <button type="button" class="btn btn-priamry btn-lg" onClick="onClickSearchButton()">更新</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="col-xs-12 col-md-8 col-lg-9">
+                    <div id="result"></div>
+                </div>
+            </div>
+            <br/>
+            <br/>
+        </div>
+        
+        <script src="//code.jquery.com/jquery-3.1.1.slim.min.js"></script>
+        <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/superagent/3.4.1/superagent.min.js"></script>
+        <script type="text/javascript">
+            const request = window.superagent;
+        
+            var CURRENT_SEARCH = {};
+
+            Number.prototype.padLeft = function(base, chr){
+                var len = (String(base || 10).length - String(this).length) + 1;
+                return len > 0 ? new Array(len).join(chr || '0') + this : this;
+            };
+            
+            function formatNumber(v){
+                var s = Math.round(v) + "";
+                var dec = s.length;
+                
+                if (dec > 3){
+                    // add the comma
+                    var c = dec % 3 > 0 ? dec % 3 : dec % 3 + 3;
+                    var t = "";
+                    var finished = false;
+                    for (var i = 0; i < s.length; i++){
+                        const this_char = s.charAt(i);
+                        if (this_char == ".")
+                            finished = true;
+                        else if (!finished && i == c){
+                            t += ",";
+                            c += 3;
+                            dec++;
+                        }
+                        t += this_char;
+                    }
+                    s = t;
+                }
+                
+                return s;
+            };
+
+            function disableForm(){
+                $("button").attr("disabled", true);
+                $("input").attr("disabled", true);
+            }
+            
+            function enableForm(){
+                $("button").removeAttr("disabled");
+                $("input").removeAttr("disabled");
+            }
+        
+            function onClickSortButton(name){
+                $(".sort-button").removeClass("btn-primary");
+                $("#sort-button-" + name).addClass("btn-primary");
+            }
+        
+            function renderResult(results){
+                const result_container = $("#result");
+                result_container.children().remove();
+
+                const container = $("<div/>");
+                result_container.append(container);
+                
+                const colors = [ "#efefef", "#ffffff" ];
+                results.forEach((result, i)=>{
+                    container.append(
+                        "<div class='row' style='background-color:" + colors[i % colors.length] + "; padding:10px'>\
+                            <div class='col-xs-12' style='cursor:pointer' onClick='onClickDetailButton(\"" + result.vid + "\")'>\
+                                <div class='row'>\
+                                    <div class='col-xs-12 col-md-7'>\
+                                        <strong>\
+                                            <div class='row'>\
+                                                <div class='col-xs-6'>" + result.maker + " " + result.model + "</div>\
+                                                <div class='col-xs-2' style='text-align:right'>" + result.year + "</div>\
+                                                <div class='col-xs-4' style='text-align:right'>" + (result.sold ? "<small>已售</small> ": "") + "$" + formatNumber(result.price) + "</strong></div>\
+                                            </div>\
+                                        </strong>\
+                                    </div>\
+                                    <div class='col-xs-12 col-md-5'>\
+                                        <small>\
+                                            <div class='row' style='text-align:right'>\
+                                                <div class='col-xs-4'>" + result.seatCount + " 座位</div>\
+                                                <div class='col-xs-4'>" + formatNumber(result.engine) + "cc</div>\
+                                                <div class='col-xs-4'>" + result.transmission + "</div>\
+                                            </div>\
+                                        </small>\
+                                    </div>\
+                                </div>\
+                            </div>\
+                            <div class='col-xs-12' style='display:none' id='detail-" + result.vid + "'>\
+                            </div>\
+                        </div>"
+                    );
+                });
+
+                result_container.append("<br/>");
+                
+                const button_container = $("<div class='row'/></div>")
+                result_container.append(button_container);
+
+                const button_box = "<div style='text-align:left' class='col-xs-4'/>";
+                const previous_button = $("<div style='text-align:left' class='col-xs-4'><a style='cursor:pointer' onClick='onClickPreviousPageButton()'>&laquo; 上一頁</a></div>");
+                const page_label = $("<div style='text-align:center' class='col-xs-4'>第 " + CURRENT_SEARCH.page + " 頁</div>");
+                const next_button = $("<div style='text-align:right' class='col-xs-4'><a style='cursor:pointer' onClick='onClickNextPageButton()'>下一頁 &raquo;</a></div>");
+                if (CURRENT_SEARCH.page > 1)
+                    button_container.append(previous_button);
+                else
+                    button_container.append(button_box);
+                button_container.append(page_label);
+                if (!CURRENT_SEARCH.maxPage || CURRENT_SEARCH.page < CURRENT_SEARCH.maxPage)
+                    button_container.append(next_button);
+                else
+                    button_container.append(button_box);
+            }
+        
+            function onClickDetailButton(vid){
+                const container = $("#detail-" + vid);
+                if (container.is(":visible"))
+                    return container.hide();
+                else if (container.children().length > 0)
+                    return container.show();
+                request.get("/detail/" + vid)
+                    .then(res=>{
+                        const json = JSON.parse(res.text);
+                        
+                        var img = "";
+                        if (json.picture){
+                            const img_width = Math.floor(100 / json.picture.length);
+                            json.picture.forEach(p=>{
+                                img += "<img src='" + getImagePath(p.big) + "' style='width:" + img_width + "%; min-width:200px' />"
+                            });
+                        }
+                        if (img != "")
+                            container.append(
+                                "<div class='row'>\
+                                    <div class='col-xs-12'>" + img + "</div>\
+                                </div>"
+                            );
+                        container.append(
+                            "<div class='row'>\
+                                <div class='col-xs-12'>" + json.remark + "</div>\
+                            </div>"
+                        );
+                        container.append(
+                            "<div class='row'>\
+                                <div class='col-xs-12'><a href='" + json.url + "' target='_blank'>" + json.url + "</a></div>\
+                            </div>"
+                        );
+                        container.show();
+                    })
+                    .catch(err=>{
+                        console.error(err);
+                        alert("failed to get detail");
+                    });
+            }
+        
+            function onClickNextPageButton(){
+                disableForm();
+                $("#result").children().remove();
+                CURRENT_SEARCH.page++;
+                getResult(CURRENT_SEARCH.page);
+            }
+            
+            function onClickPreviousPageButton(){
+                disableForm();
+                $("#result").children().remove();
+                if (CURRENT_SEARCH.page > 0){
+                    CURRENT_SEARCH.page--;
+                    getResult(CURRENT_SEARCH.page);
+                }
+            }
+        
+            function getResult(page){
+                page = page || 1;
+                request.get("/result/" + CURRENT_SEARCH.id + "/" + page)
+                    .then(res=>{
+                        const json = JSON.parse(res.text);
+                        if (json.isLastPage)
+                            CURRENT_SEARCH.maxPage = page;
+                        else if (json.results.length == 0)
+                            return onClickNextPageButton();
+                        renderResult(json.results);
+                        enableForm();
+                    })
+                    .catch(err=>{
+                        console.error(err);
+                        enableForm();
+                    });
+            }
+        
+            function onClickSearchButton(){
+                const get_min_max = function(id1, id2, name){
+                    const get_value = function(id){
+                        const str = $("#" + id).val().trim()
+                        return str != "" ? parseInt(str) : null;
+                    }
+                    
+                    const v1 = get_value(id1);
+                    if (v1 && (isNaN(v1) || v1 < 0)){
+                        alert("wrong " + name + " min");
+                        return null;
+                    }
+                    
+                    const v2 = get_value(id2);
+                    if (v2 && (isNaN(v2) || v2 < 0)){
+                        alert("wrong " + name + " max");
+                        return null;
+                    }
+                    
+                    if (v1 && v2 && v1 > v2){
+                        alert(name + " min > " + name + " max");
+                        return null;
+                    }
+                    
+                    return { min: v1, max: v2 };
+                }
+                
+                const engine = get_min_max("min-engine-input", "max-engine-input", "engine");
+                if (!engine)
+                    return;
+
+                const price = get_min_max("min-price-input", "max-price-input", "price");
+                if (!price)
+                    return;
+
+                const year = get_min_max("min-year-input", "max-year-input", "year");
+                if (!year)
+                    return;
+
+                $("#result").children().remove();
+                disableForm();
+
+                var req = request.get("/search");
+                
+                const type = $("#vehicle-button").attr("data");
+                if (type != "")
+                    req = req.query({ type: type });
+                
+                const maker = $("#maker-button").attr("data");
+                if (maker != "")
+                    req = req.query({ maker: maker });
+                    
+                const model = $("#model-input").val().trim();
+                if (model != "")
+                    req = req.query({ model: model });
+                
+                const seat = $("#seat-button").attr("data");
+                if (seat != "")
+                    req = req.query({ seatMin: parseInt(seat) }).query({ seatMax: parseInt(seat) });
+                
+                if (year.min)
+                    req = req.query({ yearMin: year.min });
+                if (year.max)
+                    req = req.query({ yearMax: year.max });
+                
+                if (price.min)
+                    req = req.query({ priceMin: price.min });
+                if (price.max)
+                    req = req.query({ priceMax: price.max });
+                    
+                if (engine.min)
+                    req = req.query({ engineMin: engine.min });
+                if (engine.max)
+                    req = req.query({ engineMax: engine.max });
+                
+                const transmission = $("#transmission-button").attr("data");
+                if (transmission != "")
+                    req = req.query({ transmission: transmission });
+                    
+                const status = $("#status-button").attr("data");
+                if (status != "")
+                    req = req.query({ status: status });
+                
+                req.then(res=>{
+                    const json = JSON.parse(res.text);
+                    CURRENT_SEARCH = { id: json.id, page: 1 };
+                    getResult();
+                })
+                .catch(err=>{
+                    enableForm();
+                });
+            }
+        
+            function getImagePath(url){
+                return "/picture/" + encodeURIComponent(url);
+            }
+        
+            function onSelectVehicle(id, title){
+                $("#vehicle-button").attr("data", id == "" ? "" : title);
+                $("#vehicle-button").text(title);
+            }
+        
+            function populateTypeSelect(){
+                return new Promise((resolve, reject)=>{
+                    request.get("/selectable-vehicle")
+                        .then(res=>{
+                            const vehicles = JSON.parse(res.text);
+                            
+                            const ul = $("#vehicle-select");
+                            ul.append("<li><a style=\"cursor:pointer\" onclick=\"onSelectVehicle('', '不限')\">不限</a></li>");
+                            
+                            vehicles.forEach(v=>{
+                                ul.append("<li><a style=\"cursor:pointer\" onclick=\"onSelectVehicle('" + v.id + "', '" + v.type + "')\">" + v.type + "</a></li>");
+                            });
+                            
+                            onSelectVehicle("", "不限");
+                            resolve();
+                        })
+                        .catch(err=>{
+                            console.error("populateTypeSelect", err);
+                            reject();
+                        });
+                });
+            }
+            
+            function onSelectMaker(id, title){
+                $("#maker-button").attr("data", id == "" ? "" : title);
+                $("#maker-button").text(title);
+            }
+            
+            function populateMakerSelect(){
+                return new Promise((resolve, reject)=>{
+                    request.get("/selectable-maker")
+                        .then(res=>{
+                            const makers = JSON.parse(res.text);
+                            
+                            const ul = $("#maker-select");
+                            ul.append("<li><a style=\"cursor:pointer\" onclick=\"onSelectMaker('', '不限')\">不限</a></li>");
+                            
+                            makers.forEach(v=>{
+                                ul.append("<li><a style=\"cursor:pointer\" onclick=\"onSelectMaker('" + v.id + "', '" + v.maker + "')\">" + v.maker + "</a></li>");
+                            });
+                            
+                            onSelectMaker("", "不限");
+                            resolve();
+                        })
+                        .catch(err=>{
+                            console.error("populateMakerSelect", err);
+                            reject();
+                        });
+                });
+            }
+
+            function onSelectSeat(id, count, title){
+                $("#seat-button").attr("data", id == "" ? "" : count);
+                $("#seat-button").text(title);
+            }
+            
+            function populateSeatSelect(){
+                return new Promise((resolve, reject)=>{
+                    request.get("/selectable-seat")
+                        .then(res=>{
+                            const seats = JSON.parse(res.text);
+                            
+                            const ul = $("#seat-select");
+                            ul.append("<li><a style=\"cursor:pointer\" onclick=\"onSelectSeat('', 0, '不限')\">不限</a></li>");
+                            
+                            seats.forEach(v=>{
+                                ul.append("<li><a style=\"cursor:pointer\" onclick=\"onSelectSeat('" + v.id + "', " + v.seatCount + ", '" + v.seatCount + " 座位')\">" + v.seatCount + " 座位</a></li>");
+                            });
+                            
+                            onSelectSeat("", 0, "不限");
+                            resolve();
+                        })
+                        .catch(err=>{
+                            console.error("populateSeatSelect", err);
+                            reject();
+                        });
+                });
+            }
+            
+            function onSelectTransmission(id, title){
+                $("#transmission-button").attr("data", id == "" ? "" : title);
+                $("#transmission-button").text(title);
+            }
+            
+            function populateTransmissionSelect(){
+                return new Promise((resolve, reject)=>{
+                    request.get("/selectable-transmission")
+                        .then(res=>{
+                            const transmissions = JSON.parse(res.text);
+                            
+                            const ul = $("#transmission-select");
+                            ul.append("<li><a style=\"cursor:pointer\" onclick=\"onSelectTransmission('', '不限')\">不限</a></li>");
+                            
+                            transmissions.forEach(v=>{
+                                ul.append("<li><a style=\"cursor:pointer\" onclick=\"onSelectTransmission('" + v.id + "', '" + v.transmission + "')\">" + v.transmission + "</a></li>");
+                            });
+                            
+                            onSelectTransmission("", "不限");
+                            resolve();
+                        })
+                        .catch(err=>{
+                            console.error("populateTransmissionSelect", err);
+                            reject();
+                        });
+                });
+            }
+            
+            function onSelectStatus(id, title){
+                $("#status-button").attr("data", id == "" ? "" : title);
+                $("#status-button").text(title);
+            }
+            
+            function populateStatusSelect(){
+                return new Promise((resolve, reject)=>{
+                    request.get("/selectable-status")
+                        .then(res=>{
+                            const statuss = JSON.parse(res.text);
+                            
+                            const ul = $("#status-select");
+                            ul.append("<li><a style=\"cursor:pointer\" onclick=\"onSelectStatus('', '不限')\">不限</a></li>");
+                            
+                            statuss.forEach(v=>{
+                                ul.append("<li><a style=\"cursor:pointer\" onclick=\"onSelectStatus('" + v.id + "', '" + v.status + "')\">" + v.status + "</a></li>");
+                            });
+                            
+                            onSelectStatus("", "不限");
+                            resolve();
+                        })
+                        .catch(err=>{
+                            console.error("populateStatusSelect", err);
+                            reject();
+                        });
+                });
+            }
+        
+            (function(){
+                $("form").hide();
+                
+                Promise.all([ populateTypeSelect(), populateMakerSelect(), populateSeatSelect(), populateTransmissionSelect(), populateStatusSelect() ])
+                    .then(()=>{
+                        $("form").show();
+                    })
+                    .catch(()=>{
+                        alert("failed, please reload");
+                    });
+            })();
+        </script>
+    </body>
+</html>
