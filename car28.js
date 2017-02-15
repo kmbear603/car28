@@ -611,6 +611,8 @@ function getDetail(vid){
                             obj.picture = [];
                             $(td).find("img").each((k, img)=>{
                                 const ori = $(img).attr("src");
+                                if (ori.indexOf(".gif") == ori.length - 4)
+                                    return true;
                                 
                                 const big_url = ori.replace("_m.jpg", "_b.jpg").replace("_s.jpg", "_b.jpg");
                                 const medium_url = ori.replace("_b.jpg", "_m.jpg").replace("_s.jpg", "_m.jpg");
