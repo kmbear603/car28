@@ -244,7 +244,8 @@
                         if (json.picture){
                             const img_width = Math.min(20, Math.floor(100 / json.picture.length));
                             json.picture.forEach(p=>{
-                                img += "<img src='" + getImagePath(p.big) + "' style='width:" + img_width + "%; min-width:200px' />"
+                                const path = getImagePath(p.big);
+                                img += "<a href='" + path + "' target='_blank'><img src='" + path + "' style='width:" + img_width + "%; min-width:200px' /></a>"
                             });
                         }
                         if (img != "")
