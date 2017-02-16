@@ -40,6 +40,8 @@ function prepareOptions(){
             return;
         }
         
+        OPTIONS.initing = true;
+        
         wait28car(()=>{
             request.get("http://www.28car.com/index2.php")
                 .timeout(10000)
@@ -249,6 +251,7 @@ function prepareOptions(){
                                     });
                                 });
                                 
+                                OPTIONS.initing = false;
                                 OPTIONS.inited = true;
                                 resolve();
                             })
