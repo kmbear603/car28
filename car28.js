@@ -12,16 +12,27 @@ const PAGE_SIZE = 20;
 const SESSIONS = [];
 const IMG_CACHE = [];
 const IMG_CACHE_SIZE = 100;
-var LAST_28CAR_REQUEST = 0;
+var CURR_CAR28_REQUEST_COUNT = 0;
 
-function wait28car(callback){
-    const now = new Date().getTime();
-    if (now >= LAST_28CAR_REQUEST + 500){
-        callback();
-        LAST_28CAR_REQUEST = now;
-    }
-    else
-        setTimeout(wait28car.bind(null, callback), 100);
+function serialize(req){
+    return new Promise((resolve, reject)=>{
+        const work = function(){
+            if (CURR_CAR28_REQUEST_COUNT < 3){
+                CURR_CAR28_REQUEST_COUNT++;
+                req.then(ret=>{
+                    CURR_CAR28_REQUEST_COUNT--;
+                    resolve(ret);
+                })
+                .catch(err=>{
+                    CURR_CAR28_REQUEST_COUNT--;
+                    reject(err);
+                });
+            }
+            else
+                setTimeout(work, 1000);
+        };
+        work();
+    });
 }
 
 function prepareOptions(){
@@ -41,230 +52,226 @@ function prepareOptions(){
         
         OPTIONS.initing = true;
         
-        wait28car(()=>{
-            request.get("http://www.28car.com/index2.php")
-                .timeout(10000)
-                .then(res=>{
-                    const response_url = JSON.parse(JSON.stringify(res)).req.url;
-                    // response_url is in the format of http://xxxxxxxx.28car.com/
-                    
-                    wait28car(()=>{
-                        request.post(response_url + "sell_lst.php")
-                            .type("form")
-                            .charset(ENCODING)
-                            .timeout(10000)
-                            .then(res=>{
-                                const $ = cheerio.load(res.text);
-                                
-                                // type
-                                OPTIONS.TYPE = [];
-                                $("#h_f_ty").find("option").each((i, option)=>{
-                                    const id = $(option).val();
-                                    if (!id || id == "")
-                                        return true;
-                                    const title = $(option).text();
-                                    OPTIONS.TYPE.push({
-                                        id: parseInt(id),
-                                        type: title
-                                    });
-                                });
-        
-                                // maker
-                                OPTIONS.MAKER = [];
-                                $("#h_f_mk").find("option").each((i, option)=>{
-                                    const id = $(option).val();
-                                    if (!id || id == "")
-                                        return true;
-                                    const title = $(option).text();
-                                    if (id == "1")
-                                        return true;
-                                    OPTIONS.MAKER.push({
-                                        id: parseInt(id),
-                                        maker: title
-                                    });
-                                });
-                                
-                                // seat
-                                OPTIONS.SEAT = [];
-                                $("#h_f_se").find("option").each((i, option)=>{
-                                    const id = $(option).val();
-                                    if (!id || id == "")
-                                        return true;
-                                    const title = $(option).text();
-                                    OPTIONS.SEAT.push({
-                                        id: parseInt(id),
-                                        //title: title,
-                                        seatCount: parseInt(title.replace(" 座", ""))
-                                    });
-                                });
-                                
-                                // engine
-                                OPTIONS.ENGINE = [];
-                                $("#h_f_eg").find("option").each((i, option)=>{
-                                    const id = $(option).val();
-                                    if (!id || id == "")
-                                        return true;
-                                    const title = $(option).text();
-                                    
-                                    const range = {};
-                                    if (title.indexOf("以下") != -1){   // 660 以下
-                                        const tokens = title.split(' ');
-                                        range.to = parseInt(tokens[0]);
-                                    }
-                                    else if (title.indexOf("以上") != -1){  // 4501 以上
-                                        const tokens = title.split(' ');
-                                        range.from = parseInt(tokens[0]);
-                                    }
-                                    else if (title.indexOf("-") != -1){ // 661-1500
-                                        const tokens = title.split('-');
-                                        range.from = parseInt(tokens[0]);
-                                        range.to = parseInt(tokens[1]);
-                                    }
-                                    else
-                                        return true;    // unknwon format
-                                    
-                                    if (range.from && range.to)
-                                        OPTIONS.ENGINE.push({
-                                            id: parseInt(id),
-                                            //title: title,
-                                            from: range.from,
-                                            to: range.to
-                                        });
-                                    else if (range.from)
-                                        OPTIONS.ENGINE.push({
-                                            id: parseInt(id),
-                                            //title: title,
-                                            from: range.from
-                                        });
-                                    else if (range.to)
-                                        OPTIONS.ENGINE.push({
-                                            id: parseInt(id),
-                                            //title: title,
-                                            to: range.to
-                                        });
-                                });
-                                
-                                // transmission
-                                OPTIONS.TRANSMISSION = [];
-                                $("#h_f_tr").find("option").each((i, option)=>{
-                                    const id = $(option).val();
-                                    if (!id || id == "")
-                                        return true;
-                                    const title = $(option).text();
-        
-                                    OPTIONS.TRANSMISSION.push({
-                                        id: parseInt(id),
-                                        transmission: title
-                                    });
-                                });
-                                
-                                // year
-                                OPTIONS.YEAR = [];
-                                $("#h_f_yr").find("option").each((i, option)=>{
-                                    const id = $(option).val();
-                                    if (!id || id == "")
-                                        return true;
-                                    const title = $(option).text();
-                                    
-                                    const range = {};
-                                    if (title.indexOf("內") != -1)  // 2017內
-                                        range.start = parseInt(title.replace("內", ""));
-                                    else if (title.indexOf("前") != -1) // 2002前
-                                        range.end = parseInt(title.replace("前", "")) - 1;
-                                    else
-                                        range.start = range.end = parseInt(title);
-        
-                                    if (range.start && range.end)
-                                        OPTIONS.YEAR.push({
-                                            id: parseInt(id),
-                                            //title: title,
-                                            start: range.start,
-                                            end: range.end
-                                        });
-                                    else if (range.start)
-                                        OPTIONS.YEAR.push({
-                                            id: parseInt(id),
-                                            //title: title,
-                                            start: range.start
-                                        });
-                                    if (range.end)
-                                        OPTIONS.YEAR.push({
-                                            id: parseInt(id),
-                                            //title: title,
-                                            end: range.end
-                                        });
-                                });
-                                
-                                // price
-                                OPTIONS.PRICE = [];
-                                $("#h_f_pr").find("option").each((i, option)=>{
-                                    const id = $(option).val();
-                                    if (!id || id == "")
-                                        return true;
-                                    const title = $(option).text();
-                                    
-                                    const range = {};
-                                    if (title.indexOf("以下") != -1)    // 1萬以下
-                                        range.max = parseInt(title.replace(/[^0-9]/g, "")) * 10000;
-                                    else if (title.indexOf("以上") != -1)    // 100萬以上
-                                        range.min = parseInt(title.replace(/[^0-9]/g, "")) * 10000;
-                                    else if (title.indexOf('-') != -1){ // 1萬-2萬
-                                        const tokens = title.split('-');
-                                        range.min = parseInt(tokens[0].replace(/[^0-9]/g, "")) * 10000;
-                                        range.max = parseInt(tokens[1].replace(/[^0-9]/g, "")) * 10000;
-                                    }
-                                    else
-                                        return true;    // unknown format
-                                    
-                                    if (range.min && range.max)
-                                        OPTIONS.PRICE.push({
-                                            id: parseInt(id),
-                                            //title: title,
-                                            min: range.min,
-                                            max: range.max
-                                        });
-                                    else if (range.min)
-                                        OPTIONS.PRICE.push({
-                                            id: parseInt(id),
-                                            //title: title,
-                                            min: range.min
-                                        });
-                                    else if (range.max)
-                                        OPTIONS.PRICE.push({
-                                            id: parseInt(id),
-                                            //title: title,
-                                            max: range.max
-                                        });
-                                });
-                                
-                                // status
-                                OPTIONS.STATUS = [];
-                                $("#h_f_do").find("option").each((i, option)=>{
-                                    const id = $(option).val();
-                                    if (!id || id == "")
-                                        return true;
-                                    const title = $(option).text();
-                                    OPTIONS.STATUS.push({
-                                        id: parseInt(id),
-                                        status: title
-                                    });
-                                });
-                                
-                                OPTIONS.initing = false;
-                                OPTIONS.inited = true;
-                                resolve();
-                            })
-                            .catch(err=>{
-                                console.error(err);
-                                reject(err);
+        serialize(request.get("http://www.28car.com/index2.php")
+            .timeout(10000))
+            .then(res=>{
+                const response_url = JSON.parse(JSON.stringify(res)).req.url;
+                // response_url is in the format of http://xxxxxxxx.28car.com/
+                
+                serialize(request.post(response_url + "sell_lst.php")
+                    .type("form")
+                    .charset(ENCODING)
+                    .timeout(10000))
+                    .then(res=>{
+                        const $ = cheerio.load(res.text);
+                        
+                        // type
+                        OPTIONS.TYPE = [];
+                        $("#h_f_ty").find("option").each((i, option)=>{
+                            const id = $(option).val();
+                            if (!id || id == "")
+                                return true;
+                            const title = $(option).text();
+                            OPTIONS.TYPE.push({
+                                id: parseInt(id),
+                                type: title
                             });
+                        });
+
+                        // maker
+                        OPTIONS.MAKER = [];
+                        $("#h_f_mk").find("option").each((i, option)=>{
+                            const id = $(option).val();
+                            if (!id || id == "")
+                                return true;
+                            const title = $(option).text();
+                            if (id == "1")
+                                return true;
+                            OPTIONS.MAKER.push({
+                                id: parseInt(id),
+                                maker: title
+                            });
+                        });
+                        
+                        // seat
+                        OPTIONS.SEAT = [];
+                        $("#h_f_se").find("option").each((i, option)=>{
+                            const id = $(option).val();
+                            if (!id || id == "")
+                                return true;
+                            const title = $(option).text();
+                            OPTIONS.SEAT.push({
+                                id: parseInt(id),
+                                //title: title,
+                                seatCount: parseInt(title.replace(" 座", ""))
+                            });
+                        });
+                        
+                        // engine
+                        OPTIONS.ENGINE = [];
+                        $("#h_f_eg").find("option").each((i, option)=>{
+                            const id = $(option).val();
+                            if (!id || id == "")
+                                return true;
+                            const title = $(option).text();
+                            
+                            const range = {};
+                            if (title.indexOf("以下") != -1){   // 660 以下
+                                const tokens = title.split(' ');
+                                range.to = parseInt(tokens[0]);
+                            }
+                            else if (title.indexOf("以上") != -1){  // 4501 以上
+                                const tokens = title.split(' ');
+                                range.from = parseInt(tokens[0]);
+                            }
+                            else if (title.indexOf("-") != -1){ // 661-1500
+                                const tokens = title.split('-');
+                                range.from = parseInt(tokens[0]);
+                                range.to = parseInt(tokens[1]);
+                            }
+                            else
+                                return true;    // unknwon format
+                            
+                            if (range.from && range.to)
+                                OPTIONS.ENGINE.push({
+                                    id: parseInt(id),
+                                    //title: title,
+                                    from: range.from,
+                                    to: range.to
+                                });
+                            else if (range.from)
+                                OPTIONS.ENGINE.push({
+                                    id: parseInt(id),
+                                    //title: title,
+                                    from: range.from
+                                });
+                            else if (range.to)
+                                OPTIONS.ENGINE.push({
+                                    id: parseInt(id),
+                                    //title: title,
+                                    to: range.to
+                                });
+                        });
+                        
+                        // transmission
+                        OPTIONS.TRANSMISSION = [];
+                        $("#h_f_tr").find("option").each((i, option)=>{
+                            const id = $(option).val();
+                            if (!id || id == "")
+                                return true;
+                            const title = $(option).text();
+
+                            OPTIONS.TRANSMISSION.push({
+                                id: parseInt(id),
+                                transmission: title
+                            });
+                        });
+                        
+                        // year
+                        OPTIONS.YEAR = [];
+                        $("#h_f_yr").find("option").each((i, option)=>{
+                            const id = $(option).val();
+                            if (!id || id == "")
+                                return true;
+                            const title = $(option).text();
+                            
+                            const range = {};
+                            if (title.indexOf("內") != -1)  // 2017內
+                                range.start = parseInt(title.replace("內", ""));
+                            else if (title.indexOf("前") != -1) // 2002前
+                                range.end = parseInt(title.replace("前", "")) - 1;
+                            else
+                                range.start = range.end = parseInt(title);
+
+                            if (range.start && range.end)
+                                OPTIONS.YEAR.push({
+                                    id: parseInt(id),
+                                    //title: title,
+                                    start: range.start,
+                                    end: range.end
+                                });
+                            else if (range.start)
+                                OPTIONS.YEAR.push({
+                                    id: parseInt(id),
+                                    //title: title,
+                                    start: range.start
+                                });
+                            if (range.end)
+                                OPTIONS.YEAR.push({
+                                    id: parseInt(id),
+                                    //title: title,
+                                    end: range.end
+                                });
+                        });
+                        
+                        // price
+                        OPTIONS.PRICE = [];
+                        $("#h_f_pr").find("option").each((i, option)=>{
+                            const id = $(option).val();
+                            if (!id || id == "")
+                                return true;
+                            const title = $(option).text();
+                            
+                            const range = {};
+                            if (title.indexOf("以下") != -1)    // 1萬以下
+                                range.max = parseInt(title.replace(/[^0-9]/g, "")) * 10000;
+                            else if (title.indexOf("以上") != -1)    // 100萬以上
+                                range.min = parseInt(title.replace(/[^0-9]/g, "")) * 10000;
+                            else if (title.indexOf('-') != -1){ // 1萬-2萬
+                                const tokens = title.split('-');
+                                range.min = parseInt(tokens[0].replace(/[^0-9]/g, "")) * 10000;
+                                range.max = parseInt(tokens[1].replace(/[^0-9]/g, "")) * 10000;
+                            }
+                            else
+                                return true;    // unknown format
+                            
+                            if (range.min && range.max)
+                                OPTIONS.PRICE.push({
+                                    id: parseInt(id),
+                                    //title: title,
+                                    min: range.min,
+                                    max: range.max
+                                });
+                            else if (range.min)
+                                OPTIONS.PRICE.push({
+                                    id: parseInt(id),
+                                    //title: title,
+                                    min: range.min
+                                });
+                            else if (range.max)
+                                OPTIONS.PRICE.push({
+                                    id: parseInt(id),
+                                    //title: title,
+                                    max: range.max
+                                });
+                        });
+                        
+                        // status
+                        OPTIONS.STATUS = [];
+                        $("#h_f_do").find("option").each((i, option)=>{
+                            const id = $(option).val();
+                            if (!id || id == "")
+                                return true;
+                            const title = $(option).text();
+                            OPTIONS.STATUS.push({
+                                id: parseInt(id),
+                                status: title
+                            });
+                        });
+                        
+                        OPTIONS.initing = false;
+                        OPTIONS.inited = true;
+                        resolve();
+                    })
+                    .catch(err=>{
+                        console.error(err);
+                        reject(err);
                     });
-                })
-                .catch(err=>{
-                    console.error(err);
-                    reject(err);
-                });
-        });
+            })
+            .catch(err=>{
+                console.error(err);
+                reject(err);
+            });
     });
 }
 
@@ -272,21 +279,19 @@ function prepareSession(session){
     return new Promise((resolve, reject)=>{
         const agent = request.agent();
         
-        wait28car(()=>{
-            agent.get("http://www.28car.com/index2.php")
-                .then(res=>{
-                    const response_url = JSON.parse(JSON.stringify(res)).req.url;
-                    // response_url is in the format of http://xxxxxxxx.28car.com/
-                    
-                    session.agent = agent;
-                    session.hostName = response_url;
-                    
-                    resolve();
-                })
-                .catch(err=>{
-                    reject(err);
-                });
-        });
+        serialize(agent.get("http://www.28car.com/index2.php"))
+            .then(res=>{
+                const response_url = JSON.parse(JSON.stringify(res)).req.url;
+                // response_url is in the format of http://xxxxxxxx.28car.com/
+                
+                session.agent = agent;
+                session.hostName = response_url;
+                
+                resolve();
+            })
+            .catch(err=>{
+                reject(err);
+            });
     });
 }
 
@@ -397,11 +402,11 @@ function translateOptionTo28CarOption(options){
 
 function makeResult(session, page){
     if (!session.RESULTS)
-        return { results: [], isLastPage: false };
+        return { results: [], isLastPage: session.completed };
     
     const start = (page - 1) * PAGE_SIZE;
     if (start >= session.RESULTS.length)
-        return { results: [], isLastPage: false };
+        return { results: [], isLastPage: session.completed };
         
     return {
         results: session.RESULTS.slice(start, Math.min(start + PAGE_SIZE, session.RESULTS.length)),
@@ -436,103 +441,99 @@ function process(session, page){
                             const hostname = session.hostName;
         
                             const get_28car_page_work = function(trial){
-                                wait28car(()=>{
-                                    agent.post(hostname + "sell_lst.php")
-                                        .type("form")
-                                        .send(car28_options)
-                                        .send({ h_page: car28_page })
-                                        .charset(ENCODING)
-                                        .then(res=>{
-                                            if (res.text.indexOf("window.location='msg_busy.php?") != -1){
-                                                console.warn(new Date(), "search", "busy");
-                                                if (trial == 10)
-                                                    return reject("too busy, giveup");
-                                                return setTimeout(get_28car_page_work.bind(null, trial + 1), trial * 500);
-                                            }
+                                serialize(agent.post(hostname + "sell_lst.php")
+                                    .type("form")
+                                    .send(car28_options)
+                                    .send({ h_page: car28_page })
+                                    .charset(ENCODING))
+                                    .then(res=>{
+                                        if (res.text.indexOf("window.location='msg_busy.php?") != -1){
+                                            console.warn(new Date(), "search", "busy");
+                                            if (trial == 10)
+                                                return reject("too busy, giveup");
+                                            return setTimeout(get_28car_page_work.bind(null, trial + 1), trial * 500);
+                                        }
+                                        
+                                        const ret = [];
+                    
+                                        const $ = cheerio.load(res.text);
+            
+                                        var idx = 0;                                
+                                        for (var idx = 0; ; idx++){
+                                            const rw = $("#rw_" + idx);
+                                            if (!rw || rw.length == 0)
+                                                break;
+                                                
+                                            const obj = {};
                                             
-                                            const ret = [];
-                        
-                                            const $ = cheerio.load(res.text);
-                
-                                            var idx = 0;                                
-                                            for (var idx = 0; ; idx++){
-                                                const rw = $("#rw_" + idx);
-                                                if (!rw || rw.length == 0)
-                                                    break;
-                                                    
-                                                const obj = {};
-                                                
-                                                const title = $(rw).attr("title");
-                                                obj.id = title.substr(title.lastIndexOf(' ') + 1);
-                                                
-                                                // get the vid
-                                                $(rw).find("td").each((i, td)=>{
-                                                    const onclick = $(td).attr("onclick");
-                                                    // goDsp(10, 307893092, 'n')
-                                                    const tokens = onclick.split(',');
-                                                    obj.vid = trimLeadingTrailingSpaces(tokens[1]);
-                                                    return false;
-                                                });
-                                                
-                                                $(rw).find("tr[height='36']").each((i, tr)=>{
-                        
-                                                    $(tr).find("td").each((j, td)=>{
-                                                        const txt = trimLeadingTrailingSpaces($(td).text());
-                        
-                                                        if (j == 0){ // name
-                                                            if (i == 1){  // update time
-                                                                // 14/0214:49
-                                                                const now = new Date();
-                                                                var time = new Date(now.getFullYear(), parseInt(txt.substr(3, 2)) - 1, parseInt(txt.substr(0, 2)), parseInt(txt.substr(5, 2)), parseInt(txt.substr(8, 2)), 0);
-                                                                if (time.getTime() > now.getTime())
-                                                                    time.setFullYear(now.getFullYear() - 1);
-                                                                obj.time = formatTime(time);
-                                                                return false;
-                                                            }
-                                                    
-                                                            obj.maker = txt.split(' ')[0];
-                                                            obj.model = txt.split(' ')[1];
+                                            const title = $(rw).attr("title");
+                                            obj.id = title.substr(title.lastIndexOf(' ') + 1);
+                                            
+                                            // get the vid
+                                            $(rw).find("td").each((i, td)=>{
+                                                const onclick = $(td).attr("onclick");
+                                                // goDsp(10, 307893092, 'n')
+                                                const tokens = onclick.split(',');
+                                                obj.vid = trimLeadingTrailingSpaces(tokens[1]);
+                                                return false;
+                                            });
+                                            
+                                            $(rw).find("tr[height='36']").each((i, tr)=>{
+                    
+                                                $(tr).find("td").each((j, td)=>{
+                                                    const txt = trimLeadingTrailingSpaces($(td).text());
+                    
+                                                    if (j == 0){ // name
+                                                        if (i == 1){  // update time
+                                                            // 14/0214:49
+                                                            const now = new Date();
+                                                            var time = new Date(now.getFullYear(), parseInt(txt.substr(3, 2)) - 1, parseInt(txt.substr(0, 2)), parseInt(txt.substr(5, 2)), parseInt(txt.substr(8, 2)), 0);
+                                                            if (time.getTime() > now.getTime())
+                                                                time.setFullYear(now.getFullYear() - 1);
+                                                            obj.time = formatTime(time);
+                                                            return false;
                                                         }
-                                                        else if (j == 1)    // seat
-                                                            obj.seatCount = parseInt(txt.replace(/[^0-9]/g, ""));
-                                                        else if (j == 2)    // engine
-                                                            obj.engine = parseInt(txt.replace(/[^0-9]/g, ""));
-                                                        else if (j == 3) // transmission
-                                                            obj.transmission = txt;
-                                                        else if (j == 4)    // year
-                                                            obj.year = parseInt(txt);
-                                                        else if (j == 5)    // price
-                                                            obj.price = parseInt(txt.replace(/[^0-9]/g, ""));
-                                                        else if (j == 9)    // sold
-                                                            obj.sold = $(td).find("img").length > 0;
-                                                    });
+                                                
+                                                        obj.maker = txt.split(' ')[0];
+                                                        obj.model = txt.split(' ')[1];
+                                                    }
+                                                    else if (j == 1)    // seat
+                                                        obj.seatCount = parseInt(txt.replace(/[^0-9]/g, ""));
+                                                    else if (j == 2)    // engine
+                                                        obj.engine = parseInt(txt.replace(/[^0-9]/g, ""));
+                                                    else if (j == 3) // transmission
+                                                        obj.transmission = txt;
+                                                    else if (j == 4)    // year
+                                                        obj.year = parseInt(txt);
+                                                    else if (j == 5)    // price
+                                                        obj.price = parseInt(txt.replace(/[^0-9]/g, ""));
+                                                    else if (j == 9)    // sold
+                                                        obj.sold = $(td).find("img").length > 0;
                                                 });
+                                            });
+                                            
+                                            if (session.options){
+                                                const options = session.options;
                                                 
-                                                if (session.options){
-                                                    const options = session.options;
-                                                    
-                                                    if ((options.yearMin && obj.year < options.yearMin)
-                                                        || (options.yearMax && obj.year > options.yearMax)
-                                                        || (options.engineMin && obj.engine < options.engineMin)
-                                                        || (options.engineMax && obj.engine > options.engineMax)
-                                                        || (options.priceMin && obj.price < options.priceMin)
-                                                        || (options.priceMax && obj.price > options.priceMax)
-                                                        || (options.seatMin && obj.seatCount < options.seatMin)
-                                                        || (options.seatMax && obj.seatCount > options.seatMax))
-                                                        continue;
-                                                }
-                                                
-                                                ret.push(obj);
+                                                if ((options.yearMin && obj.year < options.yearMin)
+                                                    || (options.yearMax && obj.year > options.yearMax)
+                                                    || (options.engineMin && obj.engine < options.engineMin)
+                                                    || (options.engineMax && obj.engine > options.engineMax)
+                                                    || (options.priceMin && obj.price < options.priceMin)
+                                                    || (options.priceMax && obj.price > options.priceMax)
+                                                    || (options.seatMin && obj.seatCount < options.seatMin)
+                                                    || (options.seatMax && obj.seatCount > options.seatMax))
+                                                    continue;
                                             }
                                             
-                                            resolve({ completed: idx < 20, results: ret });
-    //console.log("finished", page, car28_page);
-                                        })
-                                        .catch(err=>{
-                                            console.error(err);
-                                            reject(err);
-                                        });
-                                });
+                                            ret.push(obj);
+                                        }
+                                        resolve({ completed: idx < 20, results: ret });
+                                    })
+                                    .catch(err=>{
+                                        console.error(err);
+                                        reject(err);
+                                    });
                             }
                             
                             get_28car_page_work(1);
@@ -547,7 +548,7 @@ function process(session, page){
                                     const completed = obj.completed;
                                     
                                     session.lastCar28Page = car28_page;
-                                    session.completed = obj.completed;
+                                    session.completed = completed;
                                     
                                     if (!session.RESULTS)
                                         session.RESULTS = [];
@@ -605,105 +606,103 @@ function process(session, page){
 function getDetail(vid){
     return new Promise((resolve, reject)=>{
         const work = function(trial){
-            wait28car(()=>{
-                request.get("http://www.28car.com/index2.php")
-                    .query({ tourl: "/sell_dsp.php?h_vid=" + vid })
-                    .charset(ENCODING)
-                    .then(res=>{
-                        if (res.text.indexOf("window.location='msg_busy.php?") != -1){
-                            console.warn(new Date(), "detail", "busy");
-                            if (trial == 10)
-                                return reject("too busy, giveup");
-                            return setTimeout(work.bind(null, trial + 1), trial * 500);
-                        }
-                                            
-                        const response_url = JSON.parse(JSON.stringify(res)).req.url;
-                        // response_url is in the format of http://xxxxxxxx.28car.com/
-                        
-                        const $ = cheerio.load(res.text);
-                        
-                        const obj = {};
-                        
-                        $("tr[height='30']").each((i, tr)=>{
-                            var field = "";
-                            $(tr).children("td").each((j, td)=>{
-                                const txt = trimLeadingTrailingSpaces($(td).text());
-                                
-                                if (j == 0){
-                                    if (txt == "編號")
-                                        field = "id";
-                                    else if (txt == "車類")
-                                        field = "type";
-                                    else if (txt == "車廠")
-                                        field = "maker";
-                                    else if (txt == "型號")
-                                        field = "model";
-                                    else if (txt == "座位")
-                                        field = "seatCount";
-                                    else if (txt == "容積")
-                                        field = "engine";
-                                    else if (txt == "傳動")
-                                        field = "transmission";
-                                    else if (txt == "年份")
-                                        field = "year";
-                                    else if (txt == "簡評")
-                                        field = "remark";
-                                    else if (txt == "售價")
-                                        field = "price";
-                                    else if (txt == "更新日期")
-                                        field = "time";
-                                    else if (txt == "網址")
-                                        field = "url";
-                                    else
-                                        return false;
-                                }
-                                else if (j == 1){
-                                    var v = txt;
-                                    if (field == "maker")
-                                        v = v.replace(" ", " ");
-                                    else if (field == "seatCount")
-                                        v = parseInt(v.replace(/[^0-9]/g, ""));
-                                    else if (field == "engine")
-                                        v = parseInt(v.replace(/[^0-9]/g, ""));
-                                    else if (field == "price")
-                                        v = parseInt(v.split('[')[0].replace(/[^0-9]/g, ""));
-                                    else if (field == "year")
-                                        v = parseInt(v);
-                                    else if (field == "transmission")
-                                        v = v.split(' ')[0];
-                                    else if (field == "time")
-                                        v = v.replace(/-/g, "/");
-                                    obj[field] = v;
-                                }
-                                else if (j == 2 && field == "id"){
-                                    // pictures
-                                    obj.picture = [];
-                                    $(td).find("img").each((k, img)=>{
-                                        const ori = $(img).attr("src");
-                                        if (ori.indexOf(".gif") == ori.length - 4)
-                                            return true;
+            serialize(request.get("http://www.28car.com/index2.php")
+                .query({ tourl: "/sell_dsp.php?h_vid=" + vid })
+                .charset(ENCODING))
+                .then(res=>{
+                    if (res.text.indexOf("window.location='msg_busy.php?") != -1){
+                        console.warn(new Date(), "detail", "busy");
+                        if (trial == 10)
+                            return reject("too busy, giveup");
+                        return setTimeout(work.bind(null, trial + 1), trial * 500);
+                    }
                                         
-                                        const big_url = ori.replace("_m.jpg", "_b.jpg").replace("_s.jpg", "_b.jpg");
-                                        const medium_url = ori.replace("_b.jpg", "_m.jpg").replace("_s.jpg", "_m.jpg");
-                                        const small_url = ori.replace("_b.jpg", "_s.jpg").replace("_m.jpg", "_s.jpg");
-                                        obj.picture.push({
-                                            big: big_url,
-                                            medium: medium_url,
-                                            small: small_url
-                                        });
-                                    });
-                                }
+                    const response_url = JSON.parse(JSON.stringify(res)).req.url;
+                    // response_url is in the format of http://xxxxxxxx.28car.com/
+                    
+                    const $ = cheerio.load(res.text);
+                    
+                    const obj = {};
+                    
+                    $("tr[height='30']").each((i, tr)=>{
+                        var field = "";
+                        $(tr).children("td").each((j, td)=>{
+                            const txt = trimLeadingTrailingSpaces($(td).text());
+                            
+                            if (j == 0){
+                                if (txt == "編號")
+                                    field = "id";
+                                else if (txt == "車類")
+                                    field = "type";
+                                else if (txt == "車廠")
+                                    field = "maker";
+                                else if (txt == "型號")
+                                    field = "model";
+                                else if (txt == "座位")
+                                    field = "seatCount";
+                                else if (txt == "容積")
+                                    field = "engine";
+                                else if (txt == "傳動")
+                                    field = "transmission";
+                                else if (txt == "年份")
+                                    field = "year";
+                                else if (txt == "簡評")
+                                    field = "remark";
+                                else if (txt == "售價")
+                                    field = "price";
+                                else if (txt == "更新日期")
+                                    field = "time";
+                                else if (txt == "網址")
+                                    field = "url";
                                 else
                                     return false;
-                            });
+                            }
+                            else if (j == 1){
+                                var v = txt;
+                                if (field == "maker")
+                                    v = v.replace(" ", " ");
+                                else if (field == "seatCount")
+                                    v = parseInt(v.replace(/[^0-9]/g, ""));
+                                else if (field == "engine")
+                                    v = parseInt(v.replace(/[^0-9]/g, ""));
+                                else if (field == "price")
+                                    v = parseInt(v.split('[')[0].replace(/[^0-9]/g, ""));
+                                else if (field == "year")
+                                    v = parseInt(v);
+                                else if (field == "transmission")
+                                    v = v.split(' ')[0];
+                                else if (field == "time")
+                                    v = v.replace(/-/g, "/");
+                                obj[field] = v;
+                            }
+                            else if (j == 2 && field == "id"){
+                                // pictures
+                                obj.picture = [];
+                                $(td).find("img").each((k, img)=>{
+                                    const ori = $(img).attr("src");
+                                    if (ori.indexOf(".gif") == ori.length - 4)
+                                        return true;
+                                    
+                                    const big_url = ori.replace("_m.jpg", "_b.jpg").replace("_s.jpg", "_b.jpg");
+                                    const medium_url = ori.replace("_b.jpg", "_m.jpg").replace("_s.jpg", "_m.jpg");
+                                    const small_url = ori.replace("_b.jpg", "_s.jpg").replace("_m.jpg", "_s.jpg");
+                                    obj.picture.push({
+                                        big: big_url,
+                                        medium: medium_url,
+                                        small: small_url
+                                    });
+                                });
+                            }
+                            else
+                                return false;
                         });
-        
-                        resolve(obj);
-                    })
-                    .catch(err=>{
-                        reject(err);
                     });
-            });
+    
+                    resolve(obj);
+                })
+                .catch(err=>{
+                    reject(err);
+                });
         }
         
         work(1);
@@ -719,23 +718,21 @@ function getPicture(url){
         if (cache)
             return resolve(cache.data);
 
-        wait28car(()=>{
-            request.get(url)
-                .then(res=>{
-                    // clear old ones
-                    if (IMG_CACHE.length >= IMG_CACHE_SIZE)
-                        IMG_CACHE.splice(0, IMG_CACHE.length - IMG_CACHE_SIZE + 1);
-    
-                    IMG_CACHE.push({
-                        url: url,
-                        data: res.body
-                    });
-                    resolve(res.body);
-                })
-                .catch(err=>{
-                    reject(err);
+        serialize(request.get(url))
+            .then(res=>{
+                // clear old ones
+                if (IMG_CACHE.length >= IMG_CACHE_SIZE)
+                    IMG_CACHE.splice(0, IMG_CACHE.length - IMG_CACHE_SIZE + 1);
+
+                IMG_CACHE.push({
+                    url: url,
+                    data: res.body
                 });
-        });
+                resolve(res.body);
+            })
+            .catch(err=>{
+                reject(err);
+            });
     });
 }
 

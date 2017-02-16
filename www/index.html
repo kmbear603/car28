@@ -184,8 +184,9 @@
                     const work = function(i){
                         if (i >= vid_list.length)
                             return;
-                        onClickDetailButton(vid_list[i]);
-                        setTimeout(work.bind(null, i + 1), 1000);
+                        onClickDetailButton(vid_list[i], ()=>{
+                            work(i + 1);
+                        });
                     };
                     work(0);
                 }
@@ -260,7 +261,7 @@
                     button_container.append(button_box);
             }
         
-            function onClickDetailButton(vid){
+            function onClickDetailButton(vid, callback){
                 const container = $("#detail-" + vid);
                 if (container.is(":visible"))
                     return container.hide();
@@ -307,11 +308,16 @@
                         );
                         
                         container.attr("state", "loaded");
+                        
+                        if (callback)
+                            callback();
                     })
                     .catch(err=>{
                         console.error(err);
                         container.attr("state", "");
                         alert("failed to get detail");
+                        if (callback)
+                            callback();
                     });
             }
         
@@ -342,8 +348,6 @@
                         const json = JSON.parse(res.text);
                         if (json.isLastPage)
                             CURRENT_SEARCH.maxPage = page;
-                        else if (json.results.length == 0)
-                            return onClickNextPageButton();
                         renderResult(json.results);
                         enableForm();
                     })
