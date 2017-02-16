@@ -172,19 +172,30 @@
             }
 
             function onClickShowAllDetail(){
+                var vid_list = [];
                 $(".detail-container").each((i, div)=>{
                     const vid = $(div).attr("vid");
                     const state = $(div).attr("state");
                     if (!state)
-                        onClickDetailButton(vid);
+                        vid_list.push(vid);
                 });
+                
+                if (vid_list.length > 0){
+                    const work = function(i){
+                        if (i >= vid_list.length)
+                            return;
+                        onClickDetailButton(vid_list[i]);
+                        setTimeout(work.bind(null, i + 1), 1000);
+                    };
+                    work(0);
+                }
             }
 
             function renderResult(results){
                 const result_container = $("#result");
                 result_container.children().remove();
 
-                /*result_container.append(
+                result_container.append(
                     "<div class='row'>\
                         <div class='col-xs-12'>\
                             <a style='cursor:pointer' onClick='onClickShowAllDetail()'>展開全部</a>\
@@ -192,7 +203,7 @@
                         <br/>\
                         <br/>\
                     </div>"
-                );*/
+                );
 
                 const container = $("<div/>");
                 result_container.append(container);
