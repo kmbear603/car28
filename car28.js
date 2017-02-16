@@ -29,6 +29,16 @@ function prepareOptions(){
     return new Promise((resolve, reject)=>{
         if (OPTIONS.inited)
             return resolve();
+            
+        if (OPTIONS.initing){
+            const wait = function(){
+                if (OPTIONS.inited)
+                    return resolve();
+                setTimeout(wait, 1000);
+            };
+            wait();
+            return;
+        }
         
         wait28car(()=>{
             request.get("http://www.28car.com/index2.php")
