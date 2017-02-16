@@ -19,6 +19,7 @@ function prepareOptions(){
             return resolve();
             
         request.get("http://www.28car.com/index2.php")
+            .timeout(10000)
             .then(res=>{
                 const response_url = JSON.parse(JSON.stringify(res)).req.url;
                 // response_url is in the format of http://xxxxxxxx.28car.com/
@@ -26,6 +27,7 @@ function prepareOptions(){
                 request.post(response_url + "sell_lst.php")
                     .type("form")
                     .charset(ENCODING)
+                    .timeout(10000)
                     .then(res=>{
                         const $ = cheerio.load(res.text);
                         
@@ -232,6 +234,7 @@ function prepareOptions(){
                     });
             })
             .catch(err=>{
+                console.error(err);
                 reject(err);
             });
     });
@@ -377,7 +380,6 @@ function makeResult(session, page){
 
 function process(session, page){
     return new Promise((resolve, reject)=>{
-console.log("cp1");
         const after_wait = function(){
             const finish = function(ret){
                 session.processing = false;
