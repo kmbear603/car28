@@ -11,18 +11,17 @@ const OPTIONS = {};
 const PAGE_SIZE = 20;
 const SESSIONS = [];
 const IMG_CACHE = [];
-const IMG_CACHE_SIZE = 200;
+const IMG_CACHE_SIZE = 100;
 var LAST_28CAR_REQUEST = 0;
 
 function wait28car(callback){
-    /*const now = new Date().getTime();
-    if (now >= LAST_28CAR_REQUEST + 200){
+    const now = new Date().getTime();
+    if (now >= LAST_28CAR_REQUEST + 500){
         callback();
         LAST_28CAR_REQUEST = now;
     }
     else
-        setTimeout(wait28car.bind(null, callback), 100);*/
-    callback();
+        setTimeout(wait28car.bind(null, callback), 100);
 }
 
 function prepareOptions(){
