@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html>
     <head>
-        <title>28car, but better</title>
+        <title>28car幫手</title>
         <link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/bootswatch/3.3.7/spacelab/bootstrap.min.css">
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     </head>
@@ -170,10 +170,29 @@
                 $(".sort-button").removeClass("btn-primary");
                 $("#sort-button-" + name).addClass("btn-primary");
             }
-        
+
+            function onClickShowAllDetail(){
+                $(".detail-container").each((i, div)=>{
+                    const vid = $(div).attr("vid");
+                    const state = $(div).attr("state");
+                    if (!state)
+                        onClickDetailButton(vid);
+                });
+            }
+
             function renderResult(results){
                 const result_container = $("#result");
                 result_container.children().remove();
+
+                result_container.append(
+                    "<div class='row'>\
+                        <div class='col-xs-12'>\
+                            <a style='cursor:pointer' onClick='onClickShowAllDetail()'>展開全部</a>\
+                        </div>\
+                        <br/>\
+                        <br/>\
+                    </div>"
+                );
 
                 const container = $("<div/>");
                 result_container.append(container);
@@ -204,7 +223,7 @@
                                     </div>\
                                 </div>\
                             </div>\
-                            <div class='col-xs-12' style='display:none; padding:10px' id='detail-" + result.vid + "'>\
+                            <div class='col-xs-12 detail-container' style='display:none; padding:10px' id='detail-" + result.vid + "' vid='" + result.vid + "'>\
                             </div>\
                         </div>"
                     );
@@ -254,7 +273,7 @@
                             const img_width = Math.min(20, Math.floor(100 / json.picture.length));
                             json.picture.forEach(p=>{
                                 const path = getImagePath(p.big);
-                                img += "<a href='" + path + "' target='_blank'><img src='" + path + "' style='width:" + img_width + "%; min-width:200px' /></a>"
+                                img += "<a href='" + path + "' target='_blank'><img src='" + path + "' style='border:1px solid black; width:" + img_width + "%; min-width:150px; min-height:10px' /></a>"
                             });
                         }
                         if (img == "")

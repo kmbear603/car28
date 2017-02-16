@@ -10,6 +10,8 @@ const ENCODING = "big5";
 const OPTIONS = {};
 const PAGE_SIZE = 20;
 const SESSIONS = [];
+const IMG_CACHE = [];
+const IMG_CACHE_SIZE = 200;
 
 function prepareOptions(){
     return new Promise((resolve, reject)=>{
@@ -375,6 +377,7 @@ function makeResult(session, page){
 
 function process(session, page){
     return new Promise((resolve, reject)=>{
+console.log("cp1");
         const after_wait = function(){
             const finish = function(ret){
                 session.processing = false;
@@ -407,9 +410,9 @@ function process(session, page){
                                     .charset(ENCODING)
                                     .then(res=>{
                                         if (res.text.indexOf("window.location='msg_busy.php?") != -1){
-                                            console.warn(new Date(), "busy");
+                                            console.warn(new Date(), "search", "busy");
                                             if (trial == 10)
-                                                return reject(new Date(), "too busy, giveup");
+                                                return reject("too busy, giveup");
                                             return setTimeout(get_28car_page_work.bind(null, trial + 1), trial * 500);
                                         }
                                         
@@ -489,7 +492,7 @@ function process(session, page){
                                         }
                                         
                                         resolve({ completed: idx < 20, results: ret });
-console.log("finished", page);
+//console.log("finished", page, car28_page);
                                     })
                                     .catch(err=>{
                                         console.error(err);
@@ -566,103 +569,129 @@ console.log("finished", page);
 
 function getDetail(vid){
     return new Promise((resolve, reject)=>{
-        request.get("http://www.28car.com/index2.php")
-            .query({ tourl: "/sell_dsp.php?h_vid=" + vid })
-            .charset(ENCODING)
-            .then(res=>{
-                const response_url = JSON.parse(JSON.stringify(res)).req.url;
-                // response_url is in the format of http://xxxxxxxx.28car.com/
-                
-                const $ = cheerio.load(res.text);
-                
-                const obj = {};
-                
-                $("tr[height='30']").each((i, tr)=>{
-                    var field = "";
-                    $(tr).children("td").each((j, td)=>{
-                        const txt = trimLeadingTrailingSpaces($(td).text());
-                        
-                        if (j == 0){
-                            if (txt == "編號")
-                                field = "id";
-                            else if (txt == "車類")
-                                field = "type";
-                            else if (txt == "車廠")
-                                field = "maker";
-                            else if (txt == "型號")
-                                field = "model";
-                            else if (txt == "座位")
-                                field = "seatCount";
-                            else if (txt == "容積")
-                                field = "engine";
-                            else if (txt == "傳動")
-                                field = "transmission";
-                            else if (txt == "年份")
-                                field = "year";
-                            else if (txt == "簡評")
-                                field = "remark";
-                            else if (txt == "售價")
-                                field = "price";
-                            else if (txt == "更新日期")
-                                field = "time";
-                            else if (txt == "網址")
-                                field = "url";
+        const work = function(trial){
+            request.get("http://www.28car.com/index2.php")
+                .query({ tourl: "/sell_dsp.php?h_vid=" + vid })
+                .charset(ENCODING)
+                .then(res=>{
+                    if (res.text.indexOf("window.location='msg_busy.php?") != -1){
+                        console.warn(new Date(), "detail", "busy");
+                        if (trial == 10)
+                            return reject("too busy, giveup");
+                        return setTimeout(work.bind(null, trial + 1), trial * 500);
+                    }
+                                        
+                    const response_url = JSON.parse(JSON.stringify(res)).req.url;
+                    // response_url is in the format of http://xxxxxxxx.28car.com/
+                    
+                    const $ = cheerio.load(res.text);
+                    
+                    const obj = {};
+                    
+                    $("tr[height='30']").each((i, tr)=>{
+                        var field = "";
+                        $(tr).children("td").each((j, td)=>{
+                            const txt = trimLeadingTrailingSpaces($(td).text());
+                            
+                            if (j == 0){
+                                if (txt == "編號")
+                                    field = "id";
+                                else if (txt == "車類")
+                                    field = "type";
+                                else if (txt == "車廠")
+                                    field = "maker";
+                                else if (txt == "型號")
+                                    field = "model";
+                                else if (txt == "座位")
+                                    field = "seatCount";
+                                else if (txt == "容積")
+                                    field = "engine";
+                                else if (txt == "傳動")
+                                    field = "transmission";
+                                else if (txt == "年份")
+                                    field = "year";
+                                else if (txt == "簡評")
+                                    field = "remark";
+                                else if (txt == "售價")
+                                    field = "price";
+                                else if (txt == "更新日期")
+                                    field = "time";
+                                else if (txt == "網址")
+                                    field = "url";
+                                else
+                                    return false;
+                            }
+                            else if (j == 1){
+                                var v = txt;
+                                if (field == "maker")
+                                    v = v.replace(" ", " ");
+                                else if (field == "seatCount")
+                                    v = parseInt(v.replace(/[^0-9]/g, ""));
+                                else if (field == "engine")
+                                    v = parseInt(v.replace(/[^0-9]/g, ""));
+                                else if (field == "price")
+                                    v = parseInt(v.split('[')[0].replace(/[^0-9]/g, ""));
+                                else if (field == "year")
+                                    v = parseInt(v);
+                                else if (field == "transmission")
+                                    v = v.split(' ')[0];
+                                else if (field == "time")
+                                    v = v.replace(/-/g, "/");
+                                obj[field] = v;
+                            }
+                            else if (j == 2 && field == "id"){
+                                // pictures
+                                obj.picture = [];
+                                $(td).find("img").each((k, img)=>{
+                                    const ori = $(img).attr("src");
+                                    if (ori.indexOf(".gif") == ori.length - 4)
+                                        return true;
+                                    
+                                    const big_url = ori.replace("_m.jpg", "_b.jpg").replace("_s.jpg", "_b.jpg");
+                                    const medium_url = ori.replace("_b.jpg", "_m.jpg").replace("_s.jpg", "_m.jpg");
+                                    const small_url = ori.replace("_b.jpg", "_s.jpg").replace("_m.jpg", "_s.jpg");
+                                    obj.picture.push({
+                                        big: big_url,
+                                        medium: medium_url,
+                                        small: small_url
+                                    });
+                                });
+                            }
                             else
                                 return false;
-                        }
-                        else if (j == 1){
-                            var v = txt;
-                            if (field == "maker")
-                                v = v.replace(" ", " ");
-                            else if (field == "seatCount")
-                                v = parseInt(v.replace(/[^0-9]/g, ""));
-                            else if (field == "engine")
-                                v = parseInt(v.replace(/[^0-9]/g, ""));
-                            else if (field == "price")
-                                v = parseInt(v.split('[')[0].replace(/[^0-9]/g, ""));
-                            else if (field == "year")
-                                v = parseInt(v);
-                            else if (field == "transmission")
-                                v = v.split(' ')[0];
-                            else if (field == "time")
-                                v = v.replace(/-/g, "/");
-                            obj[field] = v;
-                        }
-                        else if (j == 2 && field == "id"){
-                            // pictures
-                            obj.picture = [];
-                            $(td).find("img").each((k, img)=>{
-                                const ori = $(img).attr("src");
-                                if (ori.indexOf(".gif") == ori.length - 4)
-                                    return true;
-                                
-                                const big_url = ori.replace("_m.jpg", "_b.jpg").replace("_s.jpg", "_b.jpg");
-                                const medium_url = ori.replace("_b.jpg", "_m.jpg").replace("_s.jpg", "_m.jpg");
-                                const small_url = ori.replace("_b.jpg", "_s.jpg").replace("_m.jpg", "_s.jpg");
-                                obj.picture.push({
-                                    big: big_url,
-                                    medium: medium_url,
-                                    small: small_url
-                                });
-                            });
-                        }
-                        else
-                            return false;
+                        });
                     });
+    
+                    resolve(obj);
+                })
+                .catch(err=>{
+                    reject(err);
                 });
-
-                resolve(obj);
-            })
-            .catch(err=>{
-                reject(err);
-            });
+        }
+        
+        work(1);
     });
 }
 
 function getPicture(url){
     return new Promise((resolve, reject)=>{
+        const cache = IMG_CACHE.find(c=>{
+            return c.url == url;
+        });
+        
+        if (cache)
+            return resolve(cache.data);
+
         request.get(url)
             .then(res=>{
+                // clear old ones
+                if (IMG_CACHE.length >= IMG_CACHE_SIZE)
+                    IMG_CACHE.splice(0, IMG_CACHE.length - IMG_CACHE_SIZE + 1);
+
+                IMG_CACHE.push({
+                    url: url,
+                    data: res.body
+                });
                 resolve(res.body);
             })
             .catch(err=>{
@@ -696,21 +725,6 @@ function touchOptions(options){
         options.priceMax = parseInt(options.priceMax);
         
     return options;
-}
-
-function checkAndProcess(){
-    var idle_session = null;
-    SESSIONS.forEach(session=>{
-        if (session.processing || session.completed)
-            return true;
-        idle_session = session;
-        return false;
-    });
-    
-    if (!idle_session)
-        return;
-        
-    process(idle_session);
 }
 
 module.exports = {
@@ -888,7 +902,7 @@ module.exports = {
                     
                     // pre-fetch the next page
                     if (!res.isLastPage)
-                        process(session, page + 1).then(()=>{}).catch(()=>{});
+                        process(session, page + 2).then(()=>{}).catch(()=>{});
                 })
                 .catch(err=>{
                     reject(err);
