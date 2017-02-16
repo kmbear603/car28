@@ -15,13 +15,14 @@ const IMG_CACHE_SIZE = 200;
 var LAST_28CAR_REQUEST = 0;
 
 function wait28car(callback){
-    const now = new Date().getTime();
+    /*const now = new Date().getTime();
     if (now >= LAST_28CAR_REQUEST + 200){
         callback();
         LAST_28CAR_REQUEST = now;
     }
     else
-        setTimeout(wait28car.bind(null, callback), 100);
+        setTimeout(wait28car.bind(null, callback), 100);*/
+    callback();
 }
 
 function prepareOptions(){
