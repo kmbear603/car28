@@ -985,6 +985,11 @@ module.exports = {
                 return reject(id + " not found");
 
             session.time = new Date().getTime();    // update the time
+            if (session.processing)
+                return resolve({
+                    processing: true
+                });
+                        
             process(session, page)
                 .then(res=>{
                     resolve(res);
