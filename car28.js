@@ -6,6 +6,8 @@ charset(request);
 
 const cheerio = require("cheerio");
 
+const iconv = require('iconv-lite');
+
 const ENCODING = "big5";
 const OPTIONS = {};
 const PAGE_SIZE = 20;
@@ -399,8 +401,16 @@ function translateOptionTo28CarOption(options){
         else
             sort_id = "";
 
-        return {
-            h_srh: options.model || options.remark || "",
+        const search_str_raw = iconv.encode(options.remark ? options.remark : (options.model ? options.model : ""), ENCODING).toString("hex");
+        var search_str = "";
+        for (var i = 0; i < search_str_raw.length; i ++){   // insert %
+            if (i % 2 == 0)
+                search_str += "\%";
+            search_str += search_str_raw.charAt(i).toUpperCase();
+        }
+        
+        const ret = {
+            h_srh: options.remark ? options.remark : (options.model ? options.model : ""),//search_str,
             h_srh_ty: options.remark ? 3 : 1,
             h_f_ty: type_id,
             h_f_mk: maker_id,
@@ -412,6 +422,16 @@ function translateOptionTo28CarOption(options){
             h_f_do: status_id,
             h_sort: sort_id
         };
+
+        //return ret;
+
+        var form_data = "";
+        for (var o in ret){
+            const enc = o == "h_srh" ? search_str : encodeURIComponent(ret[o]);
+            form_data += o + "=" + enc + "&";
+        }
+        
+        return form_data.substr(0, form_data.length - 1);
     }
     catch (err){
         return null;
@@ -452,7 +472,7 @@ function process(session, page){
                     const car28_options = translateOptionTo28CarOption(session.options || {});
                     if (!car28_options)
                         return finish_with_error("incorrect options");
-    
+//console.log(car28_options);
                     const get_28car_page = function(car28_page){
                         return new Promise((resolve, reject)=>{
                             const agent = session.agent;
@@ -460,9 +480,11 @@ function process(session, page){
         
                             const get_28car_page_work = function(trial){
                                 serialize(agent.post(hostname + "sell_lst.php")
-                                    .type("form")
-                                    .send(car28_options)
-                                    .send({ h_page: car28_page })
+                                    //.type("form")
+                                    //.send(car28_options)
+                                    //.send({ h_page: car28_page })
+                                    .set("Content-Type", "application/x-www-form-urlencoded;charset=" + ENCODING)
+                                    .send(car28_options + "&h_page=" + car28_page)
                                     .charset(ENCODING))
                                     .then(res=>{
                                         if (res.text.indexOf("window.location='msg_busy.php?") != -1){
@@ -529,11 +551,12 @@ function process(session, page){
                                                         obj.sold = $(td).find("img").length > 0;
                                                 });
                                             });
-                                            
+
                                             if (session.options){
                                                 const options = session.options;
-                                                
-                                                if ((options.yearMin && obj.year < options.yearMin)
+
+                                                if ((options.model && obj.model.toLowerCase().indexOf(options.model.toLowerCase()) == -1)
+                                                    || (options.yearMin && obj.year < options.yearMin)
                                                     || (options.yearMax && obj.year > options.yearMax)
                                                     || (options.engineMin && obj.engine < options.engineMin)
                                                     || (options.engineMax && obj.engine > options.engineMax)

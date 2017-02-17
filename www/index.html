@@ -108,6 +108,14 @@
                                 </div>
                             </div>
                             <div class="form-group">
+                                <label class="col-xs-3 control-label">備註</label>
+                                <div class="col-xs-9">
+                                    <div class="input-group">
+                                        <input id="remark-input" type="text" class="form-control" value="" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
                                 <label class="col-xs-3 control-label">排序</label>
                                 <div class="col-xs-9">
                                     <div class="input-group">
@@ -487,6 +495,10 @@
                 if (status != "")
                     req = req.query({ status: status });
                 
+                const remark = $("#remark-input").val().trim();
+                if (remark != "")
+                    req = req.query({ remark: remark });
+                    
                 const sort = $("#sort-button").attr("data");
                 if (sort != "")
                     req = req.query({ sort: sort });
