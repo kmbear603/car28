@@ -9,102 +9,120 @@
         <div class="container-fluid">
             <div class="row">
                 <div class="col-xs-12 col-md-4 col-lg-3">
-                    <div class="well">
-                        <form onSubmit="return false">
+                    <div class="">
+                        <form onSubmit="return false" class="form-horizontal">
                             <div class="form-group">
-                                <label>車類</label>
-                                <div class="input-group">
-                                    <div class="btn-group">
-                                        <button id="vehicle-button" type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">ANY</button>
-                                        <ul id="vehicle-select" class="dropdown-menu"></ul>
+                                <label class="col-xs-3 control-label">車類</label>
+                                <div class="col-xs-9">
+                                    <div class="input-group">
+                                        <div class="btn-group">
+                                            <button id="vehicle-button" type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">ANY</button>
+                                            <ul id="vehicle-select" class="dropdown-menu"></ul>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label>車廠</label>
-                                <div class="input-group">
-                                    <div class="btn-group">
-                                        <button id="maker-button" type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">ANY</button>
-                                        <ul id="maker-select" class="dropdown-menu"></ul>
+                                <label class="col-xs-3 control-label">車廠</label>
+                                <div class="col-xs-9">
+                                    <div class="input-group">
+                                        <div class="btn-group">
+                                            <button id="maker-button" type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">ANY</button>
+                                            <ul id="maker-select" class="dropdown-menu"></ul>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label>型號</label>
-                                <div class="input-group">
-                                    <input id="model-input" type="text" class="form-control" value="" />
+                                <label class="col-xs-3 control-label">型號</label>
+                                <div class="col-xs-9">
+                                    <div class="input-group">
+                                        <input id="model-input" type="text" class="form-control" value="" />
+                                    </div>
+                                    <!--<span class="help-block">用逗號分隔, 例: jazz,corolla</span>//-->
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label>座位</label>
-                                <div class="input-group">
-                                    <div class="btn-group">
-                                        <button id="seat-button" type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">ANY</button>
-                                        <ul id="seat-select" class="dropdown-menu"></ul>
+                                <label class="col-xs-3 control-label">座位</label>
+                                <div class="col-xs-9">
+                                    <div class="input-group">
+                                        <div class="btn-group">
+                                            <button id="seat-button" type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">ANY</button>
+                                            <ul id="seat-select" class="dropdown-menu"></ul>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label>引擎容積</label>
-                                <div class="input-group">
-                                    <input id="min-engine-input" type="text" class="form-control" value="" />
-                                    <span class="input-group-addon">-</span>
-                                    <input id="max-engine-input" type="text" class="form-control" value="" />
-                                    <span class="input-group-addon">cc</span>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label>傳動</label>
-                                <div class="input-group">
-                                    <div class="btn-group">
-                                        <button id="transmission-button" type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">ANY</button>
-                                        <ul id="transmission-select" class="dropdown-menu"></ul>
+                                <label class="col-xs-3 control-label">引擎</label>
+                                <div class="col-xs-9">
+                                    <div class="input-group">
+                                        <input id="min-engine-input" type="text" class="form-control" value="" />
+                                        <span class="input-group-addon">-</span>
+                                        <input id="max-engine-input" type="text" class="form-control" value="" />
+                                        <span class="input-group-addon">cc</span>
                                     </div>
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label>年份</label>
-                                <div class="input-group">
-                                    <input id="min-year-input" type="text" class="form-control" value="" />
-                                    <span class="input-group-addon">-</span>
-                                    <input id="max-year-input" type="text" class="form-control" value="" />
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label>價格</label>
-                                <div class="input-group">
-                                    <span class="input-group-addon">HKD</span>
-                                    <input id="min-price-input" type="text" class="form-control" value="" />
-                                    <span class="input-group-addon">-</span>
-                                    <input id="max-price-input" type="text" class="form-control" value="" />
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label>狀態</label>
-                                <div class="input-group">
-                                    <div class="btn-group">
-                                        <button id="status-button" type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">ANY</button>
-                                        <ul id="status-select" class="dropdown-menu"></ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-group" style="display:none">
-                                <label>排序</label>
-                                <div class="input-group">
-                                    <div class="btn-group">
-                                        <button id="sort-button-model" type="button" class="btn btn-default sort-button" onClick="onClickSortButton('model')">車廠型號</button>
-                                        <button id="sort-button-seat" type="button" class="btn btn-default sort-button" onClick="onClickSortButton('seat')">座位</button>
-                                        <button id="sort-button-engine" type="button" class="btn btn-default sort-button" onClick="onClickSortButton('engine')">引擎容積</button>
-                                        <button id="sort-button-transmission" type="button" class="btn btn-default sort-button" onClick="onClickSortButton('transmission')">傳動</button>
-                                        <button id="sort-button-year" type="button" class="btn btn-default sort-button" onClick="onClickSortButton('year')">年份</button>
-                                        <button id="sort-button-price" type="button" class="btn btn-default sort-button" onClick="onClickSortButton('price')">價格</button>
-                                        <button id="sort-button-status" type="button" class="btn btn-default sort-button" onClick="onClickSortButton('status')">狀態</button>
-                                        <button id="sort-button-time" type="button" class="btn btn-default sort-button btn-primary" onClick="onClickSortButton('time')">更新時間</button>
+                                <label class="col-xs-3 control-label">傳動</label>
+                                <div class="col-xs-9">
+                                    <div class="input-group">
+                                        <div class="btn-group">
+                                            <button id="transmission-button" type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">ANY</button>
+                                            <ul id="transmission-select" class="dropdown-menu"></ul>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                             <div class="form-group">
-                                <button type="button" class="btn btn-primary btn-lg" onClick="onClickSearchButton()">更新</button>
+                                <label class="col-xs-3 control-label">年份</label>
+                                <div class="col-xs-9">
+                                    <div class="input-group">
+                                        <input id="min-year-input" type="text" class="form-control" value="" />
+                                        <span class="input-group-addon">-</span>
+                                        <input id="max-year-input" type="text" class="form-control" value="" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-xs-3 control-label">價格</label>
+                                <div class="col-xs-9">
+                                    <div class="input-group">
+                                        <span class="input-group-addon">$</span>
+                                        <input id="min-price-input" type="text" class="form-control" value="" />
+                                        <span class="input-group-addon">-</span>
+                                        <input id="max-price-input" type="text" class="form-control" value="" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-xs-3 control-label">狀態</label>
+                                <div class="col-xs-9">
+                                    <div class="input-group">
+                                        <div class="btn-group">
+                                            <button id="status-button" type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">ANY</button>
+                                            <ul id="status-select" class="dropdown-menu"></ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-xs-3 control-label">排序</label>
+                                <div class="col-xs-9">
+                                    <div class="input-group">
+                                        <div class="btn-group">
+                                            <button id="sort-button" type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">UPDTIME</button>
+                                            <ul id="sort-select" class="dropdown-menu"></ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-xs-3"></div>
+                                <div class="col-xs-9">
+                                    <button type="button" class="btn btn-primary" onClick="onClickSearchButton()">更新</button>
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -192,6 +210,29 @@
                 }
             }
 
+            function formatTimeString(str){
+                const now = new Date();
+                const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+
+                const tokens = str.split(' ');
+                const time_str = tokens[1];
+
+                const date_tokens = tokens[0].split('/');
+                const date = new Date(parseInt(date_tokens[0]), parseInt(date_tokens[1] - 1), parseInt(date_tokens[2]));
+                
+                var date_str = "";
+                if (date.getFullYear() == now.getFullYear() && date.getMonth() == now.getMonth() && date.getDate() == now.getDate())
+                    date_str += "今日";
+                else if (date.getTime()  == yesterday.getTime())
+                    date_str += "昨日";
+                else if (date.getFullYear() == now.getFullYear())
+                    date_str += date_tokens[1] + "/" + date_tokens[2];
+                else
+                    date_str = tokens[0];
+                    
+                return date_str + " " + time_str;
+            }
+
             function renderResult(results){
                 const result_container = $("#result");
                 result_container.children().remove();
@@ -215,7 +256,7 @@
                         "<div class='row' style='background-color:" + colors[i % colors.length] + "; padding:5px'>\
                             <div class='col-xs-12' style='cursor:pointer; padding:10px' onClick='onClickDetailButton(\"" + result.vid + "\")'>\
                                 <div class='row'>\
-                                    <div class='col-xs-12 col-md-7'>\
+                                    <div class='col-xs-12 col-sm-6'>\
                                         <strong>\
                                             <div class='row'>\
                                                 <div class='col-xs-6'>" + result.maker + " " + result.model + "</div>\
@@ -224,12 +265,19 @@
                                             </div>\
                                         </strong>\
                                     </div>\
-                                    <div class='col-xs-12 col-md-5'>\
+                                    <div class='col-xs-12 col-sm-4'>\
                                         <small>\
                                             <div class='row' style='text-align:right'>\
                                                 <div class='col-xs-4'>" + result.seatCount + " 座位</div>\
                                                 <div class='col-xs-4'>" + formatNumber(result.engine) + "cc</div>\
                                                 <div class='col-xs-4'>" + result.transmission + "</div>\
+                                            </div>\
+                                        </small>\
+                                    </div>\
+                                    <div class='col-xs-12 col-sm-2'>\
+                                        <small>\
+                                            <div class='row' style='text-align:right'>\
+                                                <div class='col-xs-12'>" + formatTimeString(result.time) + "</div>\
                                             </div>\
                                         </small>\
                                     </div>\
@@ -439,6 +487,10 @@
                 if (status != "")
                     req = req.query({ status: status });
                 
+                const sort = $("#sort-button").attr("data");
+                if (sort != "")
+                    req = req.query({ sort: sort });
+                    
                 req.then(res=>{
                     const json = JSON.parse(res.text);
                     CURRENT_SEARCH = { id: json.id, page: 1 };
@@ -592,11 +644,39 @@
                         });
                 });
             }
+            
+            function onSelectSort(id, title){
+                $("#sort-button").attr("data", id == "" ? "" : title);
+                $("#sort-button").text(title);
+            }
+            
+            function populateSortSelect(){
+                return new Promise((resolve, reject)=>{
+                    request.get("/sortable-criteria")
+                        .then(res=>{
+                            const statuss = JSON.parse(res.text);
+                            
+                            const ul = $("#sort-select");
+                            ul.append("<li><a style=\"cursor:pointer\" onclick=\"onSelectSort('', '預設')\">預設</a></li>");
+                            
+                            statuss.forEach(v=>{
+                                ul.append("<li><a style=\"cursor:pointer\" onclick=\"onSelectSort('" + v.id + "', '" + v.column + "')\">" + v.column + "</a></li>");
+                            });
+                            
+                            onSelectSort("", "預設");
+                            resolve();
+                        })
+                        .catch(err=>{
+                            console.error("populateSortSelect", err);
+                            reject();
+                        });
+                });
+            }
         
             (function(){
                 $("form").hide();
                 
-                Promise.all([ populateTypeSelect(), populateMakerSelect(), populateSeatSelect(), populateTransmissionSelect(), populateStatusSelect() ])
+                Promise.all([ populateTypeSelect(), populateMakerSelect(), populateSeatSelect(), populateTransmissionSelect(), populateStatusSelect(), populateSortSelect() ])
                     .then(()=>{
                         $("form").show();
                     })

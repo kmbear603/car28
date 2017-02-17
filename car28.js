@@ -259,6 +259,17 @@ function prepareOptions(){
                             });
                         });
                         
+                        // sort
+                        OPTIONS.SORT = [];
+                        $("td.headnorm").each((i, td)=>{
+                            const sort_id = parseInt($(td).attr("onclick").replace(/[^0-9]/g, ""));
+                            const title = $(td).text().trim();
+                            OPTIONS.SORT.push({
+                                id: sort_id,
+                                column: title
+                            });
+                        })
+
                         OPTIONS.initing = false;
                         OPTIONS.inited = true;
                         resolve();
@@ -302,7 +313,7 @@ Number.prototype.padLeft = function(base, chr){
 
 function formatTime(t){
     return t.getFullYear() + "/" + (t.getMonth() + 1).padLeft(10) + "/" + t.getDate().padLeft(10)
-        + " " + t.getHours() + ":" + t.getMinutes().padLeft(10);
+        + " " + t.getHours().padLeft(10) + ":" + t.getMinutes().padLeft(10);
 }
 
 function trimLeadingTrailingSpaces(str){
@@ -381,6 +392,12 @@ function translateOptionTo28CarOption(options){
             status_id = find_id(OPTIONS.STATUS, s=>{ return s.status == options.status; });
         else
             status_id = "";
+            
+        var sort_id;
+        if (options.sort)
+            sort_id = find_id(OPTIONS.SORT, s=>{ return s.column == options.sort; });
+        else
+            sort_id = "";
 
         return {
             h_srh: options.model || options.remark || "",
@@ -393,6 +410,7 @@ function translateOptionTo28CarOption(options){
             h_f_yr: year_id,
             h_f_pr: price_id,
             h_f_do: status_id,
+            h_sort: sort_id
         };
     }
     catch (err){
@@ -486,10 +504,10 @@ function process(session, page){
                                                     if (j == 0){ // name
                                                         if (i == 1){  // update time
                                                             // 14/0214:49
-                                                            const now = new Date();
-                                                            var time = new Date(now.getFullYear(), parseInt(txt.substr(3, 2)) - 1, parseInt(txt.substr(0, 2)), parseInt(txt.substr(5, 2)), parseInt(txt.substr(8, 2)), 0);
-                                                            if (time.getTime() > now.getTime())
-                                                                time.setFullYear(now.getFullYear() - 1);
+                                                            const hk_now = new Date(new Date().getTime() + 8 * 60 * 60 * 1000);
+                                                            var time = new Date(hk_now.getFullYear(), parseInt(txt.substr(3, 2)) - 1, parseInt(txt.substr(0, 2)), parseInt(txt.substr(5, 2)), parseInt(txt.substr(8, 2)), 0);
+                                                            if (time.getTime() > hk_now.getTime())
+                                                                time.setFullYear(hk_now.getFullYear() - 1);
                                                             obj.time = formatTime(time);
                                                             return false;
                                                         }
@@ -853,6 +871,18 @@ module.exports = {
             prepareOptions()
                 .then(()=>{
                     resolve(OPTIONS.STATUS);
+                })
+                .catch(err=>{
+                    reject(err);
+                });
+        });
+    },
+    
+    getSortableCriteria: function(){
+        return new Promise((resolve, reject)=>{
+            prepareOptions()
+                .then(()=>{
+                    resolve(OPTIONS.SORT);
                 })
                 .catch(err=>{
                     reject(err);

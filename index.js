@@ -67,6 +67,16 @@ app.get("/selectable-status", (req, res)=>{
         });
 });
 
+app.get("/sortable-criteria", (req, res)=>{
+    car28.getSortableCriteria()
+        .then(result=>{
+            res.send(result);
+        })
+        .catch(err=>{
+            res.status(500).send(err);
+        });
+});
+
 app.get("/selectable-transmission", (req, res)=>{
     car28.getSelectableTransmission()
         .then(result=>{
