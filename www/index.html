@@ -457,8 +457,6 @@
                 if (!year)
                     return;
 
-                showLoading();
-                
                 var req = request.get("/search");
                 
                 const type = $("#vehicle-button").attr("data");
@@ -501,13 +499,20 @@
                     req = req.query({ status: status });
                 
                 const remark = $("#remark-input").val().trim();
-                if (remark != "")
+                if (remark != ""){
                     req = req.query({ remark: remark });
+                    if (!maker){
+                        alert("如要從備註搜索, 請先選擇車廠");
+                        return;
+                    }
+                }
                     
                 const sort = $("#sort-button").attr("data");
                 if (sort != "")
                     req = req.query({ sort: sort });
-                    
+
+                showLoading();
+
                 req.then(res=>{
                     const json = JSON.parse(res.text);
                     CURRENT_SEARCH = { id: json.id, page: 1 };
