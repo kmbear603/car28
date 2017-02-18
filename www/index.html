@@ -139,6 +139,9 @@
                     <div id="result"></div>
                 </div>
             </div>
+            <div id="image-container" style="display:none; position:absolute; background-color:rgba(0, 0, 0, 0.9); z-index:9999;" onClick="hideImage()">
+                <img id="image-view" style="opacity:1" />
+            </div>
             <br/>
             <br/>
         </div>
@@ -181,6 +184,15 @@
                 
                 return s;
             };
+
+            function showImage(src){
+                $("#image-view").attr("src", src);
+                $("#image-container").show();
+            }
+            
+            function hideImage(){
+                $("#image-container").hide();
+            }
 
             function disableForm(){
                 $("button").attr("disabled", true);
@@ -344,7 +356,8 @@
                             json.picture.forEach(p=>{
                                 //const path = getImagePath(p.big);
                                 const path = p.big;
-                                img += "<a href='" + path + "' target='_blank'><img src='" + path + "' style='border:1px solid black; width:" + img_width + "%; min-width:150px; min-height:10px' /></a>"
+                                //img += "<a href='" + path + "' target='_blank'><img src='" + path + "' style='border:1px solid black; width:" + img_width + "%; min-width:150px; min-height:10px' /></a>"
+                                img += "<a style='cursor:pointer' onClick='showImage(\"" + path + "\")'><img src='" + path + "' style='border:1px solid black; width:" + img_width + "%; min-width:150px; min-height:10px' /></a>"
                             });
                         }
                         if (img == "")
@@ -699,6 +712,23 @@
         
             (function(){
                 $("form").hide();
+                
+                $("#image-view").on("load", function(){
+                    $("#image-container").offset({
+                        left: 0,
+                        top: 0
+                    });
+                    
+                    $("#image-container").width($(window).width());
+                    $("#image-container").height($(document).height());
+                    
+                    const width = $("#image-view").width();
+                    const height = $("#image-view").height();
+                    $("#image-view").offset({
+                        left: ($(window).width() - width) / 2,
+                        top: window.pageYOffset + ($(window).height() - height) / 2,
+                    })
+                });
                 
                 Promise.all([ populateTypeSelect(), populateMakerSelect(), populateSeatSelect(), populateTransmissionSelect(), populateStatusSelect(), populateSortSelect() ])
                     .then(()=>{
