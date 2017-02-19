@@ -140,7 +140,7 @@
                 </div>
             </div>
             <div id="image-container" style="display:none; position:absolute; background-color:rgba(0, 0, 0, 0.9); z-index:9999;" onClick="hideImage()">
-                <img id="image-view" style="opacity:1; width:100%; max-width:100%;" />
+                <img id="image-view" style="opacity:1; max-width:100%;" />
             </div>
             <br/>
             <br/>
@@ -730,7 +730,7 @@
             (function(){
                 $("form").hide();
 
-                $(window).resize(resizeImageView);
+                //$(window).resize(resizeImageView);
                 
                 $("#image-view").on("load", function(){
                     resizeImageView();
