@@ -140,7 +140,7 @@
                 </div>
             </div>
             <div id="image-container" style="display:none; position:absolute; background-color:rgba(0, 0, 0, 0.9); z-index:9999;" onClick="hideImage()">
-                <img id="image-view" style="opacity:1" />
+                <img id="image-view" style="opacity:1; width:100%; max-width:100%;" />
             </div>
             <br/>
             <br/>
@@ -710,24 +710,30 @@
                 });
             }
         
+            function resizeImageView(){
+                $("#image-container").offset({
+                    left: 0,
+                    top: 0
+                });
+                
+                $("#image-container").width($(window).width());
+                $("#image-container").height($(document).height());
+                
+                const width = $("#image-view").width();
+                const height = $("#image-view").height();
+                $("#image-view").offset({
+                    left: ($(window).width() - width) / 2,
+                    top: window.pageYOffset + ($(window).height() - height) / 2,
+                })
+            }
+
             (function(){
                 $("form").hide();
+
+                $(window).resize(resizeImageView);
                 
                 $("#image-view").on("load", function(){
-                    $("#image-container").offset({
-                        left: 0,
-                        top: 0
-                    });
-                    
-                    $("#image-container").width($(window).width());
-                    $("#image-container").height($(document).height());
-                    
-                    const width = $("#image-view").width();
-                    const height = $("#image-view").height();
-                    $("#image-view").offset({
-                        left: ($(window).width() - width) / 2,
-                        top: window.pageYOffset + ($(window).height() - height) / 2,
-                    })
+                    resizeImageView();
                 });
                 
                 Promise.all([ populateTypeSelect(), populateMakerSelect(), populateSeatSelect(), populateTransmissionSelect(), populateStatusSelect(), populateSortSelect() ])
