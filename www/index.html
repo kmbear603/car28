@@ -372,6 +372,23 @@
                                 <div class='col-xs-12'>" + json.remark.replace(remark, "<b>" + remark + "</b>") + "</div>\
                             </div>"
                         );
+                        if (json.messages){
+                            container.append(
+                                "<div class='row'>\
+                                    <div class='col-xs-12' style='border-style:solid; border-width:1px; border-color:#cdcdcd; margin:3px'>\
+                                        <small>\
+                                            <table class='table table-condensed'>\
+                                                <tbody>"
+                                                    + json.messages.map(m=>{
+                                                        return "<tr><td><div style='padding:3px'><strong>" + m.role + " " + m.name + "</strong>&nbsp;&nbsp;&nbsp;&nbsp;" + formatTimeString(m.time) + "<br/>" + m.message + "</div></td></tr>";
+                                                    }).join(/*"<tr style='line-height:1px'><td style='height:1px; background:#000000'></td></tr>"*/"")
+                                                + "</tbody>\
+                                            </table>\
+                                        </small>\
+                                    </div>\
+                                </div>"
+                            );
+                        }
                         container.append(
                             "<div class='row'>\
                                 <div class='col-xs-12'><a href='" + json.url + "' target='_blank'>" + json.url + "</a></div>\

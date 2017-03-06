@@ -742,6 +742,35 @@ function getDetail(vid){
                                 return false;
                         });
                     });
+                    
+                    {
+                        var roles = [];
+                        var post_times = [];
+                        $("tr.forml[height='30']").each((i, tr)=>{
+                            const font_tag = $(tr).find("font");
+                            const role_tag = $(font_tag).eq(0);
+                            const time_ip_tag = $(font_tag).eq(1);
+                            roles.push(role_tag.text().trim());
+                            
+                            const str = time_ip_tag.text();
+                            post_times.push(str.substr(str.indexOf(":") + 1).trim().substr(0, 16).replace(/-/g, "/"));
+                        });
+                        
+                        if (roles.length > 0){
+                            obj.messages = [];
+                            
+                            for (var i = 0; i < roles.length; i++){
+                                const name = $("#reply_na_" + i).text().trim();
+                                const message = $("<div>" + $("#reply_ms_" + i).html().replace(/<br>/g, "@!@!") + "</div>").text().trim().replace(/@!@!/g, "<br/>");
+                                obj.messages.push({
+                                    time: post_times[i],
+                                    role: roles[i],
+                                    name: name,
+                                    message: message
+                                });
+                            }
+                        }
+                    }
     
                     resolve(obj);
                 })
