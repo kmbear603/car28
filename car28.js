@@ -749,7 +749,7 @@ function getDetail(vid){
                         $("tr.forml[height='30']").each((i, tr)=>{
                             const font_tag = $(tr).find("font");
                             const role_tag = $(font_tag).eq(0);
-                            const time_ip_tag = $(font_tag).eq(1);
+                            const time_ip_tag = $(font_tag).eq($(font_tag).length - 1);
                             roles.push(role_tag.text().trim());
                             
                             const str = time_ip_tag.text();
