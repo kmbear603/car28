@@ -198,14 +198,14 @@ function prepareOptions(){
                                     //title: title,
                                     start: range.start
                                 });
-                            if (range.end)
+                            else if (range.end)
                                 OPTIONS.YEAR.push({
                                     id: parseInt(id),
                                     //title: title,
                                     end: range.end
                                 });
                         });
-                        
+
                         // price
                         OPTIONS.PRICE = [];
                         $("#h_f_pr").find("option").each((i, option)=>{
@@ -473,6 +473,7 @@ function process(session, page){
                     if (!car28_options)
                         return finish_with_error("incorrect options");
 //console.log(car28_options);
+//console.log(session.options);
                     const get_28car_page = function(car28_page){
                         return new Promise((resolve, reject)=>{
                             const agent = session.agent;
@@ -563,8 +564,11 @@ function process(session, page){
                                                     || (options.priceMin && obj.price < options.priceMin)
                                                     || (options.priceMax && obj.price > options.priceMax)
                                                     || (options.seatMin && obj.seatCount < options.seatMin)
-                                                    || (options.seatMax && obj.seatCount > options.seatMax))
+                                                    || (options.seatMax && obj.seatCount > options.seatMax)
+                                                ){
+//console.log(obj, options.yearMax);
                                                     continue;
+                                                }
                                             }
                                             
                                             ret.push(obj);
