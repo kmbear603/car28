@@ -401,7 +401,7 @@ function translateOptionTo28CarOption(options){
         else
             sort_id = "";
 
-        const search_str_raw = iconv.encode(options.remark ? options.remark : (options.model ? options.model : ""), ENCODING).toString("hex");
+        const search_str_raw = iconv.encode(options.seller ? options.seller : (options.remark ? options.remark : (options.model ? options.model : "")), ENCODING).toString("hex");
         var search_str = "";
         for (var i = 0; i < search_str_raw.length; i ++){   // insert %
             if (i % 2 == 0)
@@ -411,7 +411,7 @@ function translateOptionTo28CarOption(options){
         
         const ret = {
             h_srh: options.remark ? options.remark : (options.model ? options.model : ""),//search_str,
-            h_srh_ty: options.remark ? 3 : 1,
+            h_srh_ty: options.seller ? 4 : (options.remark ? 3 : 1),
             h_f_ty: type_id,
             h_f_mk: maker_id,
             h_f_se: seat_id,
@@ -520,7 +520,6 @@ function process(session, page){
                                             });
                                             
                                             $(rw).find("tr[height='36']").each((i, tr)=>{
-                    
                                                 $(tr).find("td").each((j, td)=>{
                                                     const txt = trimLeadingTrailingSpaces($(td).text());
                     
@@ -551,12 +550,17 @@ function process(session, page){
                                                     else if (j == 9)    // sold
                                                         obj.sold = $(td).find("img").length > 0;
                                                 });
+                                                
+                                                // get the seller string
+                                                obj.seller = $(rw).find("tr[height='24']").eq(0).find("b").eq(0).text().trim().replace("電話:", "").replace("電郵:", "");
                                             });
 
                                             if (session.options){
                                                 const options = session.options;
 
-                                                if ((options.model && obj.model.toLowerCase().indexOf(options.model.toLowerCase()) == -1)
+                                                if ((options.seller && obj.seller.indexOf(options.seller) == -1)
+                                                    || (options.model && obj.model.toLowerCase().indexOf(options.model.toLowerCase()) == -1)
+                                                    || (options.remark && obj.remark.indexOf(options.remark) == -1)
                                                     || (options.yearMin && obj.year < options.yearMin)
                                                     || (options.yearMax && obj.year > options.yearMax)
                                                     || (options.engineMin && obj.engine < options.engineMin)
@@ -565,12 +569,10 @@ function process(session, page){
                                                     || (options.priceMax && obj.price > options.priceMax)
                                                     || (options.seatMin && obj.seatCount < options.seatMin)
                                                     || (options.seatMax && obj.seatCount > options.seatMax)
-                                                ){
-//console.log(obj, options.yearMax);
+                                                )
                                                     continue;
-                                                }
                                             }
-                                            
+//console.log(obj);
                                             ret.push(obj);
                                         }
                                         resolve({ completed: idx < 20, results: ret });
@@ -699,6 +701,8 @@ function getDetail(vid){
                                     field = "time";
                                 else if (txt == "網址")
                                     field = "url";
+                                else if (txt == "聯絡人資料")
+                                    field = "seller";
                                 else
                                     return false;
                             }
@@ -718,6 +722,8 @@ function getDetail(vid){
                                     v = v.split(' ')[0];
                                 else if (field == "time")
                                     v = v.replace(/-/g, "/");
+                                else if (field == "seller")
+                                    v = v.replace("電話:", "").replace("電郵:", "");
                                 obj[field] = v;
                             }
                             else if (j == 2 && field == "id"){
@@ -949,6 +955,7 @@ module.exports = {
     prepareSearch: function(options){
         /* options
         {
+            seller, // user name of 28car, or telephone, or email address
             model,    // "jazz", "corolla", ...
             remark,    // "皮籠", "0首"...
             type, // "私家車", "客貨車", ..., exactly same as 28car's web papge option

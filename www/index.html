@@ -116,6 +116,14 @@
                                 </div>
                             </div>
                             <div class="form-group">
+                                <label class="col-xs-3 control-label">賣家</label>
+                                <div class="col-xs-9">
+                                    <div class="input-group">
+                                        <input id="seller-input" type="text" class="form-control" value="" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
                                 <label class="col-xs-3 control-label">排序</label>
                                 <div class="col-xs-9">
                                     <div class="input-group">
@@ -349,7 +357,7 @@
                     .then(res=>{
                         container.children().remove();
                         const json = JSON.parse(res.text);
-                        
+
                         var img = "";
                         if (json.picture){
                             const img_width = Math.min(20, Math.floor(100 / json.picture.length));
@@ -369,7 +377,7 @@
                         );
                         container.append(
                             "<div class='row' style='padding:5px 0'>\
-                                <div class='col-xs-12'>" + json.remark.replace(remark, "<b>" + remark + "</b>") + "</div>\
+                                <div class='col-xs-12'>" + json.seller + ": " + json.remark.replace(remark, "<b>" + remark + "</b>") + "</div>\
                             </div>"
                         );
                         if (json.messages){
@@ -538,7 +546,11 @@
                         return;
                     }
                 }
-                    
+                
+                const seller = $("#seller-input").val().trim();
+                if (seller != "")
+                    req = req.query({ seller: seller });
+
                 const sort = $("#sort-button").attr("data");
                 if (sort != "")
                     req = req.query({ sort: sort });
